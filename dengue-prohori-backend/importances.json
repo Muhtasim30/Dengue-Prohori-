@@ -1,0 +1,17 @@
+{
+  "Rainfall": 0.0002,
+  "rain_4w": 0.0001,
+  "rain_8w": 0.0032,
+  "Sunshine": 0.0003,
+  "Humidity": 0.0003,
+  "Temperature": 0.0003,
+  "wind_u": 0.0013,
+  "wind_v": 0.001,
+  "urban_index": 0.0135,
+  "population index": 0.0,
+  "meanNDWI": 0.0055,
+  "cases_lag1": 0.9685,
+  "cases_lag2": 0.0008,
+  "month_sin": 0.0023,
+  "month_cos": 0.0026
+}

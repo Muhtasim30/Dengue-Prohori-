@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dengue Prohori · ডেঙ্গু প্রহরী — Smart Dengue Early-Warning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla:ital@0;1&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f4f2ea; --paper:#fffdf8; --paper2:#faf7ef; --ink:#16211d; --muted:#5d6e67; --faint:#8a9892;
+  --line:#e4ddcd; --line2:#efe9da;
+  --teal:#0e7c6b; --teal-deep:#0a5446; --teal-soft:#e3f0ec;
+  --green:#2e7d32; --amber:#bd8400; --orange:#e8590c; --red:#b3083e; --extreme:#7a0b86;
+  --redsoft:#fbe9ef; --shadow:0 1px 2px rgba(20,33,29,.04),0 8px 26px rgba(20,33,29,.07);
+  --dsp:'Fraunces',Georgia,serif; --body:'Hind Siliguri',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+  --cursor:auto;
+}
+body.lang-bn{--dsp:'Tiro Bangla',serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.55;font-size:16px;cursor:var(--cursor);
+  background-image:radial-gradient(1100px 520px at 88% -8%,rgba(14,124,107,.06),transparent 60%)}
+body.tbig{font-size:18px}
+body.mosq, body.mosq *{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g transform='rotate(20 16 16)'><ellipse cx='16' cy='17' rx='2.4' ry='5' fill='%230a5446'/><circle cx='16' cy='10' r='2.6' fill='%230e7c6b'/><path d='M16 13 L4 6 M16 13 L28 6' stroke='%230e7c6b' stroke-width='1.4' opacity='.55'/><path d='M16 14 L5 12 M16 14 L27 12' stroke='%230e7c6b' stroke-width='1.2' opacity='.4'/><path d='M16 11 L9 4 M16 11 L23 4' stroke='%230a5446' stroke-width='1' opacity='.7'/><line x1='16' y1='10' x2='16' y2='3' stroke='%23b3083e' stroke-width='1.3'/></g></svg>") 16 16, auto}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+.dsp{font-family:var(--dsp)} .mono{font-family:var(--mono)}
+.en,.bn{display:none}
+body.lang-en .en{display:revert} body.lang-bn .bn{display:revert}
+body.lang-en span.en,body.lang-en i.en,body.lang-en b.en{display:inline}
+body.lang-bn span.bn,body.lang-bn i.bn,body.lang-bn b.bn{display:inline}
+
+header{position:sticky;top:0;z-index:1200;background:rgba(255,253,248,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hbar{display:flex;align-items:center;gap:14px;padding:11px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.seal{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#15a18b,var(--teal-deep));box-shadow:0 0 0 3px #fff,0 0 0 4px var(--line),var(--shadow);animation:bob 5s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.seal svg{width:25px;height:25px}
+.brand .nm{font-family:var(--dsp);font-weight:600;font-size:21px;line-height:1}
+.brand .tg{font-size:11px;color:var(--muted);margin-top:3px}
+.sp{flex:1}
+.ctrls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+select,button{font-family:var(--body);font-size:14px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px;cursor:pointer;transition:.15s}
+select:hover,button:hover{border-color:var(--teal)}
+button.pri{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:600}
+button.pri:hover{background:var(--teal-deep)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+.seg button{border:none;border-radius:0;padding:8px 11px;background:transparent;font-weight:600;color:var(--muted)}
+.seg button.act{background:var(--teal);color:#fff}
+.live{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:p 2s infinite}
+.dot.off{background:var(--amber);animation:none}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(46,125,50,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.subnav{border-bottom:1px solid var(--line);background:var(--paper)}
+.subnav .in{display:flex;gap:3px;overflow-x:auto;padding:6px 0}
+.subnav a{font-size:12.5px;color:var(--muted);text-decoration:none;padding:6px 11px;border-radius:8px;white-space:nowrap}
+.subnav a:hover{background:var(--teal-soft);color:var(--teal-deep)}
+
+section{padding-top:34px;scroll-margin-top:120px}
+.eyebrow{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:8px}
+h2.sec{font-family:var(--dsp);font-weight:600;font-size:26px;letter-spacing:-.2px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px;max-width:720px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.panel h3{font-family:var(--dsp);font-weight:600;font-size:18px;display:flex;align-items:center;gap:9px;margin-bottom:3px}
+.panel .hint{color:var(--muted);font-size:13px;margin-bottom:14px}
+.chartbox{position:relative;height:250px}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:15px}
+.grid2b{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.4px}
+.b-low{background:#e6f3e6;color:var(--green)} .b-mod{background:#faf0d8;color:var(--amber)}
+.b-high{background:#fdeada;color:var(--orange)} .b-ext{background:#f7e3f0;color:var(--extreme)}
+.c-low{color:var(--green)} .c-mod{color:var(--amber)} .c-high{color:var(--orange)} .c-ext{color:var(--extreme)}
+
+.verdict{border-radius:20px;padding:24px 26px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;overflow:hidden}
+.verdict.low{background:linear-gradient(120deg,#eef6ec,#fff)} .verdict.mod{background:linear-gradient(120deg,#fbf3e0,#fff)}
+.verdict.high{background:linear-gradient(120deg,#fdeede,#fff)} .verdict.ext{background:linear-gradient(120deg,#f7e3f0,#fff)}
+.verdict .vlab{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.verdict .vk{font-family:var(--dsp);font-weight:700;font-size:clamp(32px,6vw,52px);line-height:1.02;margin:3px 0 5px}
+.verdict .vmeta{font-size:15px} .verdict .vmeta b{font-family:var(--mono);font-weight:600}
+.gauge{position:absolute;right:26px;top:24px;width:108px;height:108px}
+.conf{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-top:10px}
+.confbar{width:90px;height:7px;border-radius:5px;background:#e9e3d4;overflow:hidden;border:1px solid var(--line)}
+.confbar i{display:block;height:100%;background:var(--teal)}
+.vtip{margin-top:14px;background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:12px;padding:12px 15px;font-size:14.5px;display:flex;gap:11px;align-items:flex-start}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:16px;box-shadow:var(--shadow);transition:.18s}
+.card:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(20,33,29,.06),0 14px 34px rgba(20,33,29,.09)}
+.card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.card .v{font-family:var(--dsp);font-weight:600;font-size:32px;line-height:1.05;margin-top:6px}
+.card .u{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+/* explanation card */
+.xcard{border-radius:16px;border:1px solid var(--line);padding:20px;box-shadow:var(--shadow)}
+.xcard .xh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.xcard .xh .xn{font-family:var(--dsp);font-size:24px;font-weight:600}
+.xcard .xh .xp{font-family:var(--mono);font-size:24px;font-weight:600}
+.xreason{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line2)}
+.xreason .xi{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:16px;background:var(--teal-soft)}
+.xreason .xt{font-size:14.5px} .xreason .xt .xf{display:block;color:var(--muted);font-size:13px;margin-top:1px}
+
+/* daily change */
+.change{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center}
+.change .day{text-align:center;padding:16px;border-radius:14px;border:1px solid var(--line)}
+.change .day .dl{font-size:12px;color:var(--muted);text-transform:uppercase}
+.change .day .dv{font-family:var(--dsp);font-size:26px;font-weight:600;margin-top:5px}
+.change .arrow{font-size:30px;color:var(--faint)}
+.deltas{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.delta{flex:1;min-width:120px;border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:var(--paper2)}
+.delta .dn{font-size:12px;color:var(--muted)} .delta .dd{font-family:var(--mono);font-size:18px;font-weight:600;margin-top:3px}
+.up{color:var(--red)} .dn2{color:var(--green)}
+
+/* animation flow */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.fstep{flex:1;min-width:150px;text-align:center;padding:16px 12px;position:relative}
+.fstep .fe{font-size:34px;display:block;margin-bottom:8px;animation:fp 2.4s ease-in-out infinite}
+.fstep:nth-child(2) .fe{animation-delay:.3s} .fstep:nth-child(3) .fe{animation-delay:.6s}
+.fstep:nth-child(4) .fe{animation-delay:.9s} .fstep:nth-child(5) .fe{animation-delay:1.2s}
+@keyframes fp{50%{transform:scale(1.14) translateY(-3px)}}
+.fstep .ft{font-weight:600;font-size:14.5px} .fstep .fd{font-size:12.5px;color:var(--muted);margin-top:3px}
+.fstep .farr{position:absolute;right:-9px;top:42px;font-size:20px;color:var(--teal)}
+.fstep:last-child .farr{display:none}
+
+/* before/after */
+.ba{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);height:230px;background:linear-gradient(#bfe3f2,#eaf6e9)}
+.ba .sky{position:absolute;inset:0;transition:.4s}
+.ba .water{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#5aa9d6,#3d7fb0);transition:height .5s;opacity:.85}
+.ba .ground{position:absolute;left:0;right:0;bottom:0;height:46px;background:#7a8a5f}
+.ba .mos{position:absolute;font-size:20px;transition:.5s;opacity:0}
+.ba .rain span{position:absolute;width:2px;height:12px;background:rgba(90,160,210,.7);animation:rain .8s linear infinite}
+@keyframes rain{from{transform:translateY(-20px)}to{transform:translateY(240px)}}
+.barange{width:100%;margin-top:14px;accent-color:var(--teal)}
+
+/* simulator */
+.simrow{display:flex;align-items:center;gap:14px;margin:14px 0}
+.simrow label{flex:0 0 150px;font-size:14px} .simrow input[type=range]{flex:1;accent-color:var(--teal)}
+.simrow .sv{font-family:var(--mono);width:64px;text-align:right;font-size:14px}
+.simgauge{text-align:center}
+
+/* map / heatmap */
+#bigmap{height:440px;border-radius:14px;border:1px solid var(--line);z-index:1}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.legend i{display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.maptabs{display:flex;gap:8px;margin-bottom:12px}
+.maptabs button.act{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+/* chat */
+.chatlog{height:300px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:4px}
+.msg{max-width:84%;padding:11px 14px;border-radius:14px;font-size:14px;line-height:1.5}
+.msg.u{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:4px}
+.msg.a{align-self:flex-start;background:var(--paper2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chatin{display:flex;gap:9px;margin-top:12px}
+.chatin input{flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-family:var(--body);font-size:14px}
+.chip{display:inline-block;font-size:12.5px;padding:6px 11px;border:1px solid var(--line);border-radius:99px;margin:4px 6px 0 0;cursor:pointer;background:#fff}
+.chip:hover{border-color:var(--teal);background:var(--teal-soft)}
+
+/* reports */
+.rtabs{display:flex;gap:8px;margin-bottom:14px}
+.rtabs button.act{background:var(--teal);color:#fff;border-color:var(--teal)}
+.rtypes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.rtype{flex:1;min-width:100px;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;font-size:13px;background:#fff;cursor:pointer}
+.rtype.act{border-color:var(--teal);background:var(--teal-soft);font-weight:600}
+.rtype .e{display:block;font-size:20px;margin-bottom:2px}
+.field{margin-bottom:10px} .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=email],textarea,input[type=file]{width:100%;font-family:var(--body);font-size:14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink)}
+textarea:focus,input:focus{outline:none;border-color:var(--teal)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumbs img{width:62px;height:62px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
+.privacy{background:#fff8e6;border:1px solid #f0dca6;border-radius:11px;padding:11px 13px;font-size:12.5px;color:#7a5a00;margin-bottom:12px}
+#repmap{height:200px;border-radius:11px;border:1px solid var(--line);margin-bottom:10px;z-index:1}
+
+/* areas + feed */
+.areagrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:4px 0 14px}
+.achip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px;cursor:pointer;user-select:none;font-size:13.5px}
+.achip.on{border-color:var(--teal);background:var(--teal-soft)}
+.achip .box{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--faint);display:grid;place-items:center;font-size:10px;color:#fff}
+.achip.on .box{background:var(--teal);border-color:var(--teal)}
+.achip .st{margin-left:auto;width:9px;height:9px;border-radius:50%;background:#d8d2c2}
+.feed{display:flex;flex-direction:column;gap:10px}
+.feeditem{border:1px solid var(--line);border-left-width:4px;border-radius:11px;padding:12px 14px;background:var(--paper2)}
+.feeditem.low{border-left-color:var(--green)} .feeditem.mod{border-left-color:var(--amber)} .feeditem.high{border-left-color:var(--orange)} .feeditem.ext{border-left-color:var(--extreme)}
+.feeditem .fh{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.feeditem .fh b{font-family:var(--dsp);font-size:15px} .feeditem .fh .ts{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.feeditem .ln{display:flex;gap:8px;margin-top:5px;font-size:13.5px} .feeditem .ln .ic{flex:0 0 auto;width:16px;text-align:center;color:var(--teal)}
+.feeditem .ln .lab{display:block;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+.empty{color:var(--faint);font-size:13px;padding:14px;text-align:center}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(12,1fr);gap:6px}
+.cal .m{border-radius:9px;padding:11px 4px 9px;text-align:center;border:1px solid var(--line);transition:.15s;cursor:default}
+.cal .m:hover{transform:translateY(-2px)}
+.cal .m .mn{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.cal .m .mv{font-family:var(--dsp);font-weight:600;font-size:15px;margin-top:3px}
+
+footer{margin-top:44px;border-top:1px solid var(--line);padding:22px 0 60px;color:var(--faint);font-size:12.5px;line-height:1.6}
+footer a{color:var(--teal-deep)}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 8px;margin-right:6px}
+.note{font-size:12px;color:var(--faint);margin-top:8px}
+
+/* notices */
+.notice{border-radius:14px;padding:13px 16px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);box-shadow:var(--shadow)}
+.notice .ni{font-size:20px;flex:0 0 auto}
+.notice .nt b{font-family:var(--dsp);font-size:15px} .notice .nt div{font-size:13.5px;color:var(--muted);margin-top:2px}
+.notice.info{background:#eef4f7;border-color:#cfe0e8} .notice.warning{background:#fdf4e3;border-color:#f0dca6}
+.notice.urgent{background:var(--redsoft);border-color:#f3c9d6}
+.notice .nx{margin-left:auto;cursor:pointer;color:var(--faint);font-size:13px}
+.adminbox{background:var(--paper);border:1px dashed var(--teal);border-radius:14px;padding:16px;margin-bottom:14px}
+.adminbox .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.adminbox select,.adminbox input{font-size:13px}
+
+/* weather markers on map */
+.wxmark{position:relative;width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.25);border:3px solid #fff;font-size:20px;transition:transform .15s}
+.wxmark:hover{transform:scale(1.15);z-index:1000}
+.wxmark .ring{position:absolute;inset:-3px;border-radius:50%;border:3px solid currentColor}
+.wxmark .rain{position:absolute;inset:0;overflow:hidden;border-radius:50%;pointer-events:none}
+.wxmark .rain i{position:absolute;width:2px;height:7px;background:#3d7fb0;opacity:.8;animation:wxrain .6s linear infinite}
+@keyframes wxrain{from{transform:translateY(-8px)}to{transform:translateY(46px)}}
+.wxmark .sun{position:absolute;inset:-2px;border-radius:50%;box-shadow:0 0 14px 2px rgba(240,180,41,.7);animation:wxsun 2s ease-in-out infinite}
+@keyframes wxsun{50%{box-shadow:0 0 22px 5px rgba(240,180,41,.9)}}
+.wxmark .wind{position:absolute;bottom:2px;font-size:12px;animation:wxwind 1.6s ease-in-out infinite}
+@keyframes wxwind{50%{transform:translateX(4px)}}
+.wxlabel{position:absolute;top:46px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;font-weight:600;white-space:nowrap;background:#fff;padding:1px 5px;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+/* interactive ecosystem */
+.eco{position:relative;height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#cfeaf6 0%,#dff0e6 55%,#cbb487 55%,#a8895c 100%)}
+.eco .sun2{position:absolute;top:14px;right:18px;font-size:34px;transition:.4s}
+.eco .cloud{position:absolute;top:10px;font-size:30px;animation:drift 14s linear infinite}
+@keyframes drift{from{left:-12%}to{left:108%}}
+.eco .puddle{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(#5aa9d6,#3d7fb0);opacity:.8;transition:height .6s}
+.eco .larva,.eco .skeeter{position:absolute;transition:.4s}
+.eco .skeeter{font-size:18px;animation:fly 3s ease-in-out infinite}
+@keyframes fly{0%,100%{transform:translate(0,0)}33%{transform:translate(14px,-12px)}66%{transform:translate(-10px,-6px)}}
+.eco .ecorain{position:absolute;inset:0;pointer-events:none}
+.eco .ecorain i{position:absolute;width:2px;height:13px;background:rgba(90,160,210,.75);animation:rain .8s linear infinite}
+.ecobtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ecometer{height:14px;border-radius:8px;background:#e9e3d4;overflow:hidden;border:1px solid var(--line);margin-top:12px}
+.ecometer i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2e7d32,#bd8400,#e8590c,#b3083e);transition:width .6s}
+
+/* patient docs */
+.docrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.docchip{font-size:12px;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:flex;gap:6px;align-items:center}
+.caseStat{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.caseStat .cs{flex:1;min-width:120px;background:var(--paper2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;text-align:center}
+.caseStat .cs b{font-family:var(--dsp);font-size:22px;display:block}
+
+@media(max-width:920px){.grid2,.grid2b{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}.areagrid{grid-template-columns:repeat(2,1fr)}.change{grid-template-columns:1fr}.gauge{display:none}}
+@media(max-width:520px){.grid4{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="lang-en mosq">
+<header>
+  <div class="wrap hbar">
+    <div class="brand">
+      <div class="seal"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 7 5 9 5 13a7 7 0 0 0 14 0c0-4-3-6-7-11Z"/><path d="M9 13a3 3 0 0 0 6 0"/></svg></div>
+      <div><div class="nm"><span class="en">Dengue Prohori</span><span class="bn">ডেঙ্গু প্রহরী</span></div>
+        <div class="tg"><span class="en">Smart Community Dengue Early-Warning</span><span class="bn">স্মার্ট ডেঙ্গু পূর্বাভাস ব্যবস্থা</span></div></div>
+    </div>
+    <div class="sp"></div>
+    <div class="ctrls">
+      <select id="areaSel" title="Area"></select>
+      <div class="seg"><button id="enBtn" class="act">EN</button><button id="bnBtn">বাংলা</button></div>
+      <div class="seg"><button id="szBtn">A+</button></div>
+      <button id="mosqBtn" title="Mosquito cursor" style="background:var(--teal-soft)">🦟</button>
+      <button id="soundBtn" title="Sound effects">🔇</button>
+      <button id="adminBtn" title="Admin">⚙️</button>
+      <div class="live"><span class="dot off" id="liveDot"></span><span id="liveTxt" class="mono">…</span></div>
+    </div>
+  </div>
+  <div class="subnav"><div class="wrap in">
+    <a href="#now"><span class="en">Now</span><span class="bn">এখন</span></a>
+    <a href="#calendar"><span class="en">Season</span><span class="bn">ঋতু</span></a>
+    <a href="#change"><span class="en">Daily change</span><span class="bn">দৈনিক পরিবর্তন</span></a>
+    <a href="#why"><span class="en">Why?</span><span class="bn">কেন?</span></a>
+    <a href="#map"><span class="en">Heatmap</span><span class="bn">হিটম্যাপ</span></a>
+    <a href="#analytics"><span class="en">Analytics</span><span class="bn">বিশ্লেষণ</span></a>
+    <a href="#learn"><span class="en">How it forms</span><span class="bn">কীভাবে হয়</span></a>
+    <a href="#sim"><span class="en">Simulator</span><span class="bn">সিমুলেটর</span></a>
+    <a href="#prevent"><span class="en">Prevention</span><span class="bn">প্রতিরোধ</span></a>
+    <a href="#assistant"><span class="en">Assistant</span><span class="bn">সহায়ক</span></a>
+    <a href="#report"><span class="en">Report</span><span class="bn">রিপোর্ট</span></a>
+    <a href="#alerts"><span class="en">Subscribe</span><span class="bn">সাবস্ক্রাইব</span></a>
+  </div></div>
+</header>
+
+<div class="wrap">
+
+  <!-- NOTICES + ADMIN -->
+  <section id="notices" style="padding-top:22px">
+    <div id="adminPanel" class="adminbox" style="display:none">
+      <div style="font-family:var(--dsp);font-weight:600;margin-bottom:10px">🛠️ <span class="en">Admin — post a public notice</span><span class="bn">অ্যাডমিন — পাবলিক নোটিশ</span></div>
+      <div class="row">
+        <select id="adType"><option value="info">ℹ️ Info</option><option value="warning">⚠️ Warning</option><option value="urgent">🚨 Urgent</option></select>
+        <input type="text" id="adTitle" placeholder="Title / শিরোনাম" style="flex:1;min-width:160px">
+        <input type="text" id="adBody" placeholder="Message / বার্তা" style="flex:2;min-width:220px">
+        <button class="pri" id="adPost"><span class="en">Post</span><span class="bn">পোস্ট</span></button>
+        <button id="adExit"><span class="en">Exit admin</span><span class="bn">প্রস্থান</span></button>
+      </div>
+      <div class="note"><span class="en">Demo: notices are stored on this device. Production needs an authenticated admin backend.</span><span class="bn">ডেমো: নোটিশ এই ডিভাইসে সংরক্ষিত। বাস্তবে অনুমোদিত ব্যাকএন্ড প্রয়োজন।</span></div>
+    </div>
+    <div id="noticeList"></div>
+  </section>
+
+  <!-- NOW / VERDICT -->
+  <section id="now">
+    <div class="verdict mod" id="verdict">
+      <canvas class="gauge" id="gauge" width="108" height="108"></canvas>
+      <div class="vlab"><span class="en">Dengue risk this week</span><span class="bn">এই সপ্তাহে ডেঙ্গুর ঝুঁকি</span> · <span id="vArea">Dhaka</span></div>
+      <div class="vk" id="vLevel">…</div>
+      <div class="vmeta" id="vMeta"></div>
+      <div class="conf"><span class="en">Confidence</span><span class="bn">নির্ভরযোগ্যতা</span>: <span class="confbar"><i id="confFill"></i></span><span id="confTxt" class="mono"></span></div>
+      <div class="vtip"><span style="font-size:18px">🛡️</span><div id="vTip"></div></div>
+    </div>
+    <div class="grid4" style="margin-top:14px">
+      <div class="card"><div class="k"><span class="en">Risk score</span><span class="bn">ঝুঁকি স্কোর</span></div><div class="v" id="cPct">—</div><div class="u" id="cBand">—</div></div>
+      <div class="card"><div class="k"><span class="en">Breeding suitability</span><span class="bn">প্রজনন অনুকূলতা</span></div><div class="v" id="cMsi">—</div><div class="u">MSI · 0–1</div></div>
+      <div class="card"><div class="k"><span class="en">This week (est.)</span><span class="bn">এই সপ্তাহ</span></div><div class="v" id="cWk1">—</div><div class="u" id="cRange">—</div></div>
+      <div class="card"><div class="k"><span class="en">4-day early warning</span><span class="bn">৪-দিনের পূর্বসতর্কতা</span></div><div class="v" id="cEw">—</div><div class="u" id="cEwT">—</div></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)">
+      <span>🎯 <span class="en">Anchor with last week's confirmed cases (optional, improves accuracy):</span><span class="bn">গত সপ্তাহের নিশ্চিত রোগী দিয়ে অ্যাঙ্কর করুন (ঐচ্ছিক):</span></span>
+      <input type="number" id="anchorIn" min="0" placeholder="e.g. 120" style="width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:var(--mono)">
+      <button id="anchorApply" class="pri"><span class="en">Apply</span><span class="bn">প্রয়োগ</span></button>
+      <button id="anchorClear"><span class="en">Clear</span><span class="bn">মুছুন</span></button>
+      <span id="modelBadge" class="mono" style="margin-left:auto;font-size:11.5px"></span>
+    </div>
+  </section>
+
+  <!-- SEASON CALENDAR (near top per request) -->
+  <section id="calendar">
+    <div class="eyebrow"><span class="en">Seasonal rhythm</span><span class="bn">ঋতুভিত্তিক ধরন</span></div>
+    <h2 class="sec"><span class="en">Dengue season calendar</span><span class="bn">ডেঙ্গু ঋতু ক্যালেন্ডার</span></h2>
+    <p class="sub"><span class="en">Peak transmission runs Jul–Sep (monsoon & post-monsoon). The current month is outlined.</span><span class="bn">সর্বোচ্চ সংক্রমণ জুলাই–সেপ্টেম্বর (বর্ষা ও বর্ষা-পরবর্তী)। চলতি মাস চিহ্নিত।</span></p>
+    <div class="panel"><div class="cal" id="cal"></div></div>
+  </section>
+
+  <!-- DAILY CHANGE -->
+  <section id="change">
+    <div class="eyebrow"><span class="en">Since yesterday</span><span class="bn">গতকালের তুলনায়</span></div>
+    <h2 class="sec"><span class="en">What changed today</span><span class="bn">আজ যা বদলেছে</span></h2>
+    <p class="sub"><span class="en">A quick day-over-day comparison for your area, and why it moved.</span><span class="bn">আপনার এলাকার দিন-প্রতিদিনের তুলনা ও কারণ।</span></p>
+    <div class="panel"><div class="change">
+      <div class="day"><div class="dl"><span class="en">Yesterday</span><span class="bn">গতকাল</span></div><div class="dv" id="chYest">—</div></div>
+      <div class="arrow">→</div>
+      <div class="day"><div class="dl"><span class="en">Today</span><span class="bn">আজ</span></div><div class="dv" id="chToday">—</div></div>
+    </div><div class="deltas" id="chDeltas"></div></div>
+  </section>
+
+  <!-- WHY / EXPLANATION -->
+  <section id="why">
+    <div class="eyebrow"><span class="en">AI risk explanation</span><span class="bn">ঝুঁকির ব্যাখ্যা</span></div>
+    <h2 class="sec"><span class="en">Why this risk level?</span><span class="bn">এই ঝুঁকি কেন?</span></h2>
+    <p class="sub"><span class="en">Every score is explained in plain language — the factors driving it, in order of impact.</span><span class="bn">প্রতিটি স্কোর সহজ ভাষায় ব্যাখ্যা করা — প্রভাব অনুযায়ী সাজানো কারণসমূহ।</span></p>
+    <div class="xcard" id="xcard"></div>
+  </section>
+
+  <!-- HEATMAP + HOTSPOTS -->
+  <section id="map">
+    <div class="eyebrow"><span class="en">Public heatmap</span><span class="bn">পাবলিক হিটম্যাপ</span></div>
+    <h2 class="sec"><span class="en">Area risk heatmap &amp; breeding hotspots</span><span class="bn">এলাকাভিত্তিক হিটম্যাপ ও প্রজননস্থল</span></h2>
+    <p class="sub"><span class="en">Live, zoomable, area-level risk. Switch layers to see model risk or community-reported breeding hotspots. Click any point for details.</span><span class="bn">লাইভ, জুমযোগ্য, এলাকাভিত্তিক ঝুঁকি। লেয়ার বদলে মডেল-ঝুঁকি বা নাগরিক-রিপোর্টকৃত প্রজননস্থল দেখুন। বিস্তারিত জানতে যেকোনো পয়েন্টে চাপ দিন।</span></p>
+    <div class="panel" style="padding:14px">
+      <div class="maptabs">
+        <button id="layRisk" class="act"><span class="en">Risk heatmap</span><span class="bn">ঝুঁকি</span></button>
+        <button id="layHot"><span class="en">Breeding hotspots</span><span class="bn">প্রজননস্থল</span></button>
+        <button id="layWx" class="act"><span class="en">🌦️ Weather overlay</span><span class="bn">🌦️ আবহাওয়া</span></button>
+      </div>
+      <div id="bigmap"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <!-- ANALYTICS -->
+  <section id="analytics">
+    <div class="eyebrow"><span class="en">Scientific analytics</span><span class="bn">বৈজ্ঞানিক বিশ্লেষণ</span></div>
+    <h2 class="sec"><span class="en">How conditions drive risk</span><span class="bn">পরিবেশ যেভাবে ঝুঁকি বাড়ায়</span></h2>
+    <p class="sub"><span class="en">Location-specific relationships from the last 90 days of live data — each chart explained simply.</span><span class="bn">গত ৯০ দিনের লাইভ তথ্য থেকে এলাকাভিত্তিক সম্পর্ক — প্রতিটি সহজভাবে ব্যাখ্যা করা।</span></p>
+    <div class="grid2b">
+      <div class="panel"><h3>💧 <span class="en">Humidity vs Risk</span><span class="bn">আর্দ্রতা বনাম ঝুঁকি</span></h3><div class="hint" id="hHum"></div><div class="chartbox"><canvas id="chHum"></canvas></div></div>
+      <div class="panel"><h3>🌧️ <span class="en">Rainfall vs Risk</span><span class="bn">বৃষ্টি বনাম ঝুঁকি</span></h3><div class="hint" id="hRain"></div><div class="chartbox"><canvas id="chRain"></canvas></div></div>
+      <div class="panel"><h3>🌬️ <span class="en">Wind &amp; dispersal</span><span class="bn">বাতাস ও বিস্তার</span></h3><div class="hint" id="hWind"></div><div class="chartbox"><canvas id="chWind"></canvas></div></div>
+      <div class="panel"><h3>🛰️ <span class="en">NDWI (water) vs Risk</span><span class="bn">NDWI (পানি) বনাম ঝুঁকি</span></h3><div class="hint" id="hNdwi"></div><div class="chartbox"><canvas id="chNdwi"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- LEARN: formation + before/after -->
+  <section id="learn">
+    <div class="eyebrow"><span class="en">Understand it</span><span class="bn">বুঝে নিন</span></div>
+    <h2 class="sec"><span class="en">How dengue risk forms</span><span class="bn">ডেঙ্গু ঝুঁকি যেভাবে তৈরি হয়</span></h2>
+    <p class="sub"><span class="en">From a single rainfall to an outbreak — the chain, step by step.</span><span class="bn">একটি বৃষ্টি থেকে প্রকোপ পর্যন্ত — ধাপে ধাপে।</span></p>
+    <div class="panel"><div class="flow">
+      <div class="fstep"><span class="fe">🌧️</span><div class="ft"><span class="en">Rainfall</span><span class="bn">বৃষ্টি</span></div><div class="fd"><span class="en">Rain falls across the area</span><span class="bn">এলাকায় বৃষ্টি হয়</span></div><span class="farr">→</span></div>
+      <div class="fstep"><span class="fe">🪣</span><div class="ft"><span class="en">Water accumulates</span><span class="bn">পানি জমে</span></div><div class="fd"><span class="en">Pots, drains, tyres fill up</span><span class="bn">টব, নালা, টায়ারে পানি</span></div><span class="farr">→</span></div>
+      <div class="fstep"><span class="fe">🥚</span><div class="ft"><span class="en">Breeding</span><span class="bn">প্রজনন</span></div><div class="fd"><span class="en">Aedes lay eggs in clean water</span><span class="bn">এডিস পরিষ্কার পানিতে ডিম পাড়ে</span></div><span class="farr">→</span></div>
+      <div class="fstep"><span class="fe">🦟</span><div class="ft"><span class="en">Population grows</span><span class="bn">মশা বাড়ে</span></div><div class="fd"><span class="en">Warm, humid air speeds it up</span><span class="bn">উষ্ণ, আর্দ্র বাতাসে দ্রুত বাড়ে</span></div><span class="farr">→</span></div>
+      <div class="fstep"><span class="fe">⚠️</span><div class="ft"><span class="en">Dengue risk rises</span><span class="bn">ডেঙ্গু ঝুঁকি বাড়ে</span></div><div class="fd"><span class="en">More bites → more cases</span><span class="bn">বেশি কামড় → বেশি রোগী</span></div></div>
+    </div></div>
+    <div class="panel" style="margin-top:14px">
+      <h3><span class="en">Before &amp; after rainfall</span><span class="bn">বৃষ্টির আগে ও পরে</span></h3>
+      <div class="hint"><span class="en">Drag the slider — watch water collect and mosquitoes appear.</span><span class="bn">স্লাইডার টানুন — পানি জমা ও মশা বাড়া দেখুন।</span></div>
+      <div class="ba" id="ba">
+        <div class="rain" id="baRain"></div>
+        <div class="water" id="baWater" style="height:0"></div>
+        <div class="ground"></div>
+      </div>
+      <input class="barange" id="baSlider" type="range" min="0" max="100" value="0">
+      <div id="baCaption" style="text-align:center;font-size:14px;margin-top:8px;color:var(--muted)"></div>
+    </div>
+  </section>
+
+    <div class="panel" style="margin-top:14px">
+      <h3>🌍 <span class="en">Interactive breeding ecosystem</span><span class="bn">ইন্টারেক্টিভ প্রজনন পরিবেশ</span></h3>
+      <div class="hint"><span class="en">Press the buttons and watch the chain react — rain fills puddles, heat &amp; humidity speed breeding, larvae become mosquitoes, and the risk meter climbs.</span><span class="bn">বোতাম চাপুন ও প্রতিক্রিয়া দেখুন — বৃষ্টিতে পানি জমে, তাপ-আর্দ্রতায় দ্রুত প্রজনন, লার্ভা থেকে মশা, আর ঝুঁকি মিটার বাড়ে।</span></div>
+      <div class="eco" id="eco">
+        <div class="sun2" id="ecoSun">⛅</div>
+        <div class="ecorain" id="ecoRain"></div>
+        <div class="puddle" id="ecoPuddle" style="height:0"></div>
+      </div>
+      <div class="ecobtns">
+        <button id="ecoRainBtn">🌧️ <span class="en">Add rainfall</span><span class="bn">বৃষ্টি</span></button>
+        <button id="ecoHeatBtn">🌡️ <span class="en">Add heat &amp; humidity</span><span class="bn">তাপ ও আর্দ্রতা</span></button>
+        <button id="ecoTimeBtn">⏩ <span class="en">Pass a week</span><span class="bn">এক সপ্তাহ</span></button>
+        <button id="ecoSprayBtn">🧪 <span class="en">Spray / clean up</span><span class="bn">স্প্রে / পরিষ্কার</span></button>
+        <button id="ecoResetBtn"><span class="en">Reset</span><span class="bn">রিসেট</span></button>
+      </div>
+      <div class="ecometer"><i id="ecoMeter"></i></div>
+      <div id="ecoCaption" style="font-size:14px;margin-top:8px;color:var(--muted)"></div>
+    </div>
+
+  <!-- SIMULATOR -->
+  <section id="sim">
+    <div class="eyebrow"><span class="en">What-if</span><span class="bn">যদি এমন হয়</span></div>
+    <h2 class="sec"><span class="en">Dengue impact simulator</span><span class="bn">ডেঙ্গু প্রভাব সিমুলেটর</span></h2>
+    <p class="sub"><span class="en">Adjust the environment and watch the predicted risk respond — built on your area's current values.</span><span class="bn">পরিবেশ বদলান, ঝুঁকির পরিবর্তন দেখুন — আপনার এলাকার বর্তমান মান থেকে।</span></p>
+    <div class="grid2b"><div class="panel">
+      <div class="simrow"><label>🌧️ <span class="en">Rainfall</span><span class="bn">বৃষ্টি</span></label><input type="range" id="sRain" min="-50" max="100" value="0"><span class="sv" id="sRainV">0%</span></div>
+      <div class="simrow"><label>💧 <span class="en">Humidity</span><span class="bn">আর্দ্রতা</span></label><input type="range" id="sHum" min="-20" max="20" value="0"><span class="sv" id="sHumV">0%</span></div>
+      <div class="simrow"><label>🛰️ <span class="en">Water / NDWI</span><span class="bn">পানি / NDWI</span></label><input type="range" id="sNdwi" min="-50" max="100" value="0"><span class="sv" id="sNdwiV">0%</span></div>
+      <div class="simrow"><label>🌡️ <span class="en">Temperature</span><span class="bn">তাপমাত্রা</span></label><input type="range" id="sTemp" min="-5" max="5" value="0" step="0.5"><span class="sv" id="sTempV">0°</span></div>
+      <button id="simReset" style="margin-top:6px"><span class="en">Reset</span><span class="bn">রিসেট</span></button>
+    </div>
+    <div class="panel simgauge"><h3 style="justify-content:center"><span class="en">Simulated risk</span><span class="bn">সিমুলেটেড ঝুঁকি</span></h3>
+      <canvas id="simGauge" width="180" height="180" style="margin:8px auto"></canvas>
+      <div class="dsp" id="simLevel" style="font-size:24px;font-weight:600"></div>
+      <div id="simNote" style="font-size:13.5px;color:var(--muted);margin-top:6px"></div></div></div>
+  </section>
+
+  <!-- PREVENTION (context-aware) -->
+  <section id="prevent">
+    <div class="eyebrow"><span class="en">Act on it</span><span class="bn">করণীয়</span></div>
+    <h2 class="sec"><span class="en">Prevention for your conditions</span><span class="bn">আপনার অবস্থার জন্য প্রতিরোধ</span></h2>
+    <p class="sub"><span class="en">Tailored to what's actually driving risk in your area right now — not generic tips.</span><span class="bn">আপনার এলাকায় এখন যা ঝুঁকি বাড়াচ্ছে তার ভিত্তিতে — সাধারণ পরামর্শ নয়।</span></p>
+    <div class="grid3" id="prevCards"></div>
+  </section>
+
+  <!-- ASSISTANT -->
+  <section id="assistant">
+    <div class="eyebrow"><span class="en">Ask</span><span class="bn">জিজ্ঞাসা</span></div>
+    <h2 class="sec"><span class="en">Dengue assistant</span><span class="bn">ডেঙ্গু সহায়ক</span></h2>
+    <p class="sub"><span class="en">A data-driven assistant that answers from the live forecast for any area. (Rule-based — see roadmap for the LLM upgrade.)</span><span class="bn">লাইভ পূর্বাভাস থেকে উত্তর দেয় এমন একটি সহায়ক। (নিয়মভিত্তিক — উন্নত সংস্করণ রোডম্যাপে।)</span></p>
+    <div class="panel">
+      <div class="chatlog" id="chatlog"></div>
+      <div style="margin-top:8px" id="chips"></div>
+      <div class="chatin"><input id="chatInput" placeholder=""><button class="pri" id="chatSend"><span class="en">Ask</span><span class="bn">পাঠান</span></button></div>
+    </div>
+  </section>
+
+  <!-- REPORT -->
+  <section id="report">
+    <div class="eyebrow"><span class="en">Two-way · community</span><span class="bn">দ্বিমুখী · কমিউনিটি</span></div>
+    <h2 class="sec"><span class="en">Community reporting</span><span class="bn">কমিউনিটি রিপোর্ট</span></h2>
+    <p class="sub"><span class="en">Help build real ground-truth. Report breeding spots or patient cases to surface emerging hotspots.</span><span class="bn">বাস্তব তথ্য গড়ে তুলুন। প্রজননস্থল বা রোগীর তথ্য জানিয়ে নতুন হটস্পট চিহ্নিত করুন।</span></p>
+    <div class="panel">
+      <div class="rtabs"><button id="tabBreed" class="act"><span class="en">🦟 Breeding spot</span><span class="bn">🦟 প্রজননস্থল</span></button><button id="tabCase"><span class="en">🌡️ Patient case</span><span class="bn">🌡️ রোগীর তথ্য</span></button></div>
+
+      <div id="breedForm">
+        <div class="rtypes" id="breedTypes">
+          <div class="rtype act" data-t="water"><span class="e">💧</span><span class="en">Stagnant water</span><span class="bn">জমা পানি</span></div>
+          <div class="rtype" data-t="drain"><span class="e">🕳️</span><span class="en">Blocked drain</span><span class="bn">বন্ধ নালা</span></div>
+          <div class="rtype" data-t="construction"><span class="e">🏗️</span><span class="en">Construction site</span><span class="bn">নির্মাণস্থল</span></div>
+          <div class="rtype" data-t="container"><span class="e">🪣</span><span class="en">Abandoned containers</span><span class="bn">পরিত্যক্ত পাত্র</span></div>
+        </div>
+        <div id="repmap"></div>
+        <div class="field"><label><span class="en">Address (or tap the map)</span><span class="bn">ঠিকানা (বা মানচিত্রে চাপ দিন)</span></label><input type="text" id="bAddr" placeholder=""></div>
+        <div class="field"><label><span class="en">Why is this a risk?</span><span class="bn">এটি কেন ঝুঁকিপূর্ণ?</span></label><textarea id="bDesc" rows="2" placeholder=""></textarea></div>
+        <div class="field"><label><span class="en">Photo (optional)</span><span class="bn">ছবি (ঐচ্ছিক)</span></label><input type="file" id="bImg" accept="image/*" multiple><div class="thumbs" id="bThumbs"></div></div>
+        <button class="pri" id="bSubmit"><span class="en">Submit breeding report</span><span class="bn">রিপোর্ট জমা দিন</span></button>
+      </div>
+
+      <div id="caseForm" style="display:none">
+        <div class="privacy"><b>🔒 <span class="en">Privacy &amp; consent:</span><span class="bn">গোপনীয়তা ও সম্মতি:</span></b>
+          <span class="en"> This collects sensitive personal &amp; medical data. In this prototype, files and the full NID are <b>kept only in your browser for this session and never uploaded</b>. A real deployment requires explicit patient consent, encryption, access control and a secure authenticated backend.</span>
+          <span class="bn"> এতে সংবেদনশীল ব্যক্তিগত ও চিকিৎসা তথ্য থাকে। এই প্রোটোটাইপে ফাইল ও পূর্ণ NID <b>শুধু এই সেশনে ব্রাউজারে থাকে, কোথাও আপলোড হয় না</b>। বাস্তবে রোগীর সম্মতি, এনক্রিপশন ও নিরাপদ ব্যাকএন্ড প্রয়োজন।</span></div>
+        <div class="grid2b">
+          <div class="field"><label><span class="en">Patient name</span><span class="bn">রোগীর নাম</span></label><input type="text" id="cName" placeholder=""></div>
+          <div class="field"><label><span class="en">NID / Birth-cert no.</span><span class="bn">NID / জন্মনিবন্ধন নম্বর</span></label><input type="text" id="cNid" placeholder=""></div>
+          <div class="field"><label><span class="en">Phone</span><span class="bn">ফোন</span></label><input type="text" id="cPhone" placeholder=""></div>
+          <div class="field"><label><span class="en">Age</span><span class="bn">বয়স</span></label><input type="text" id="cAge" placeholder=""></div>
+        </div>
+        <div class="field"><label><span class="en">Address / area</span><span class="bn">ঠিকানা / এলাকা</span></label><input type="text" id="cAddr" placeholder=""></div>
+        <div class="grid2b">
+          <div class="field"><label><span class="en">Confirmation method</span><span class="bn">নিশ্চিতকরণ পদ্ধতি</span></label>
+            <select id="cMethod"><option>NS1 Antigen</option><option>IgG / IgM</option><option>CBC + clinical</option><option>RT-PCR</option></select></div>
+          <div class="field"><label><span class="en">Status</span><span class="bn">অবস্থা</span></label>
+            <select id="cStatus"><option>Home care</option><option>Hospitalised</option><option>ICU</option><option>Recovered</option></select></div>
+        </div>
+        <div class="field"><label>📄 <span class="en">Hospital / diagnostic report (PDF or image)</span><span class="bn">হাসপাতাল / ডায়াগনস্টিক রিপোর্ট (PDF বা ছবি)</span></label>
+          <input type="file" id="cReport" accept="image/*,application/pdf" multiple></div>
+        <div class="field"><label>🪪 <span class="en">NID card scan (optional)</span><span class="bn">NID কার্ড স্ক্যান (ঐচ্ছিক)</span></label>
+          <input type="file" id="cNidScan" accept="image/*,application/pdf"></div>
+        <div class="docrow" id="cDocs"></div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:12px 0"><input type="checkbox" id="cConsent" style="width:auto;margin-top:3px"><span><span class="en">The patient (or guardian) consents to share this data for dengue surveillance.</span><span class="bn">রোগী/অভিভাবক ডেঙ্গু নজরদারির জন্য এই তথ্য শেয়ারে সম্মত।</span></span></label>
+        <button class="pri" id="cSubmit"><span class="en">Submit patient case</span><span class="bn">রোগীর তথ্য জমা দিন</span></button>
+        <div class="note" id="cMsg"></div>
+        <div class="caseStat" id="caseStat"></div>
+      </div>
+      <div id="repList" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- ALERTS + SUBSCRIBE -->
+  <section id="alerts">
+    <div class="eyebrow"><span class="en">Stay warned</span><span class="bn">সতর্ক থাকুন</span></div>
+    <h2 class="sec"><span class="en">Alerts &amp; email subscription</span><span class="bn">সতর্কতা ও ইমেইল সাবস্ক্রিপশন</span></h2>
+    <p class="sub"><span class="en">Follow areas for in-browser alerts now; subscribe by email for early warnings even when you're away.</span><span class="bn">এখনই ব্রাউজার সতর্কতার জন্য এলাকা অনুসরণ করুন; দূরে থাকলেও পূর্বসতর্কতার জন্য ইমেইলে সাবস্ক্রাইব করুন।</span></p>
+    <div class="grid2">
+      <div class="panel"><h3><span class="en">Follow areas (browser alerts)</span><span class="bn">এলাকা অনুসরণ</span></h3>
+        <div class="areagrid" id="areaGrid"></div>
+        <div class="ctrls"><button class="pri" id="enableNotif">🔔 <span class="en">Enable</span><span class="bn">চালু</span></button>
+          <button id="checkNow"><span class="en">Check now</span><span class="bn">যাচাই</span></button>
+          <button id="testNotif"><span class="en">Test</span><span class="bn">পরীক্ষা</span></button>
+          <span class="live"><span class="dot off" id="permDot"></span><span id="permTxt"></span></span></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+        <h3><span class="en">Email early-warning subscription</span><span class="bn">ইমেইল পূর্বসতর্কতা</span></h3>
+        <div class="hint"><span class="en">Demo: saved on your device. Real emails need a backend (see roadmap).</span><span class="bn">ডেমো: ডিভাইসে সংরক্ষিত। প্রকৃত ইমেইলের জন্য ব্যাকএন্ড প্রয়োজন।</span></div>
+        <div class="field"><input type="email" id="subEmail" placeholder="you@example.com"></div>
+        <div class="field"><select id="subArea"></select></div>
+        <button class="pri" id="subBtn"><span class="en">Subscribe</span><span class="bn">সাবস্ক্রাইব</span></button>
+        <div id="subList" style="margin-top:12px"></div>
+      </div>
+      <div class="panel"><h3><span class="en">Alert feed</span><span class="bn">সতর্কতা ফিড</span></h3>
+        <div class="feed" id="feed"><div class="empty"><span class="en">No alerts yet.</span><span class="bn">এখনো নেই।</span></div></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <div style="margin-bottom:9px"><span class="tag">Live data</span><span class="tag">Bilingual</span><span class="tag">Citizen-powered</span><span class="tag">Privacy-first</span></div>
+    <span class="en"><b style="color:var(--muted)">Methods.</b> Live weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>. Area-level risk = thesis Mosquito-Suitability framework (rainfall, water/NDWI-proxy, humidity, temperature, urban density &amp; per-area waterlogging) with 1–4-week lagged climate effects and seasonal climatology. NDWI is currently a rainfall-accumulation proxy; trained XGBoost/LSTM and verified DGHS data plug in later. Community reports &amp; subscriptions are stored on your device only. A decision-support prototype — not a substitute for IEDCR/DGHS surveillance.</span>
+    <span class="bn"><b style="color:var(--muted)">পদ্ধতি।</b> আবহাওয়া <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> থেকে। এলাকাভিত্তিক ঝুঁকি = থিসিসের মশা-অনুকূলতা কাঠামো (বৃষ্টি, পানি/NDWI, আর্দ্রতা, তাপমাত্রা, নগর-ঘনত্ব ও জলাবদ্ধতা), ১–৪ সপ্তাহের বিলম্বিত প্রভাবসহ। NDWI এখন বৃষ্টির হিসাব থেকে অনুমিত; প্রশিক্ষিত মডেল ও DGHS তথ্য পরে যুক্ত হবে। রিপোর্ট ও সাবস্ক্রিপশন শুধু আপনার ডিভাইসে। এটি একটি সহায়ক প্রোটোটাইপ, সরকারি নজরদারির বিকল্প নয়।</span>
+  </footer>
+</div>
+<script src="prohori-model.js"></script>
+<script>
+/* ===================== DENGUE PROHORI v2 ===================== */
+let lang="en";
+const tr=(en,bn)=>lang==="bn"?bn:en;
+const $=id=>document.getElementById(id);
+const clamp01=x=>Math.max(0,Math.min(1,x));
+const bnum=n=>String(n).replace(/\d/g,d=>"০১২৩৪৫৬৭৮৯"[d]);
+const N=n=>lang==="bn"?bnum(n):String(n);
+
+/* areas: Dhaka thanas + division cities. urban=density factor, wlog=waterlogging tendency */
+const AREAS=[
+  {id:"dhaka",n:"Dhaka (city avg)",bn:"ঢাকা (গড়)",p:"Dhaka",lat:23.81,lon:90.41,urban:.92,wlog:.65},
+  {id:"mirpur",n:"Mirpur",bn:"মিরপুর",p:"Dhaka",lat:23.8223,lon:90.3654,urban:.95,wlog:.82},
+  {id:"mohammadpur",n:"Mohammadpur",bn:"মোহাম্মদপুর",p:"Dhaka",lat:23.7659,lon:90.3589,urban:.9,wlog:.7},
+  {id:"uttara",n:"Uttara",bn:"উত্তরা",p:"Dhaka",lat:23.8759,lon:90.3795,urban:.85,wlog:.5},
+  {id:"dhanmondi",n:"Dhanmondi",bn:"ধানমন্ডি",p:"Dhaka",lat:23.7461,lon:90.3742,urban:.9,wlog:.5},
+  {id:"badda",n:"Badda",bn:"বাড্ডা",p:"Dhaka",lat:23.7806,lon:90.4267,urban:.88,wlog:.78},
+  {id:"gulshan",n:"Gulshan",bn:"গুলশান",p:"Dhaka",lat:23.7925,lon:90.4078,urban:.8,wlog:.4},
+  {id:"banani",n:"Banani",bn:"বনানী",p:"Dhaka",lat:23.7936,lon:90.4043,urban:.8,wlog:.42},
+  {id:"farmgate",n:"Farmgate",bn:"ফার্মগেট",p:"Dhaka",lat:23.7583,lon:90.3897,urban:.95,wlog:.6},
+  {id:"motijheel",n:"Motijheel",bn:"মতিঝিল",p:"Dhaka",lat:23.7330,lon:90.4172,urban:.95,wlog:.68},
+  {id:"wari",n:"Wari",bn:"ওয়ারী",p:"Dhaka",lat:23.7190,lon:90.4203,urban:.97,wlog:.85},
+  {id:"olddhaka",n:"Old Dhaka",bn:"পুরান ঢাকা",p:"Dhaka",lat:23.7104,lon:90.4074,urban:.98,wlog:.9},
+  {id:"jatrabari",n:"Jatrabari",bn:"যাত্রাবাড়ী",p:"Dhaka",lat:23.7104,lon:90.4350,urban:.93,wlog:.88},
+  {id:"chattogram",n:"Chattogram",bn:"চট্টগ্রাম",p:"Chattogram",lat:22.36,lon:91.78,urban:.78,wlog:.6},
+  {id:"khulna",n:"Khulna",bn:"খুলনা",p:"Khulna",lat:22.85,lon:89.54,urban:.62,wlog:.55},
+  {id:"rajshahi",n:"Rajshahi",bn:"রাজশাহী",p:"Rajshahi",lat:24.37,lon:88.60,urban:.58,wlog:.4},
+  {id:"sylhet",n:"Sylhet",bn:"সিলেট",p:"Sylhet",lat:24.90,lon:91.87,urban:.55,wlog:.65},
+  {id:"barishal",n:"Barishal",bn:"বরিশাল",p:"Barishal",lat:22.70,lon:90.37,urban:.50,wlog:.7},
+  {id:"rangpur",n:"Rangpur",bn:"রংপুর",p:"Rangpur",lat:25.74,lon:89.27,urban:.48,wlog:.45},
+  {id:"mymensingh",n:"Mymensingh",bn:"ময়মনসিংহ",p:"Mymensingh",lat:24.75,lon:90.41,urban:.52,wlog:.55},
+];
+const PCENTER={Dhaka:[23.81,90.41],Chattogram:[22.36,91.78],Khulna:[22.85,89.54],Rajshahi:[24.37,88.60],Sylhet:[24.90,91.87],Barishal:[22.70,90.37],Rangpur:[25.74,89.27],Mymensingh:[24.75,90.41]};
+const aName=a=>lang==="bn"?a.bn:a.n;
+const byId=id=>AREAS.find(a=>a.id===id);
+
+const MONTHLY=[45,28,88,72,155,270,330,315,198,72,25,8];
+const RAIN_NORM=[8,28,60,140,260,360,400,340,300,170,30,8];
+const WT={rain:.40,ndwi:.30,humidity:.12,temp:.10,urban:.08};
+const MED=147,HIGH=374,EXT=800;
+const monthsBN=["জানু","ফেব্রু","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টে","অক্টো","নভে","ডিসে"];
+const monthsEN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+let state={area:AREAS[0],wcache:{},summary:null,charts:{},map:null,layers:{},repmap:null,repPin:null,
+  reports:[], subs:[], following:new Set(), alertLog:[], lastNotified:{}, sim:{}, breedType:"water", bImgs:[]};
+
+const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+state.reports=store.get("dp2_reports",[]); state.subs=store.get("dp2_subs",[]);
+state.following=new Set(store.get("dp2_follow",["dhaka"])); state.alertLog=store.get("dp2_alerts",[]);
+state.cases=store.get("dp2_cases",[]); state.notices=store.get("dp2_notices",[]); state.awx={}; state.eco={rain:0,heat:0,water:0,risk:0}; state.soundOn=false;
+
+/* ---------------- data ---------------- */
+async function fetchWeather(area){
+  const key=area.p; if(state.wcache[key])return state.wcache[key];
+  const [la,lo]=PCENTER[area.p]||[area.lat,area.lon];
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max,wind_direction_10m_dominant,sunshine_duration&past_days=90&forecast_days=16&timezone=Asia%2FDhaka`;
+  const r=await fetch(u); if(!r.ok)throw new Error(r.status); const d=(await r.json()).daily;
+  const out=d.time.map((t,i)=>({date:new Date(t),tmean:(d.temperature_2m_max[i]+d.temperature_2m_min[i])/2,
+    rain:d.precipitation_sum[i]??0,hum:d.relative_humidity_2m_mean[i]??70,wind:d.wind_speed_10m_max[i]??0,wdir:d.wind_direction_10m_dominant[i]??0,
+    sun:(d.sunshine_duration&&d.sunshine_duration[i]!=null)?d.sunshine_duration[i]/3600:6}));
+  state.wcache[key]=out; return out;
+}
+const rainSum=(d,e,days)=>{let s=0;for(let i=Math.max(0,e-days+1);i<=e;i++)s+=d[i].rain;return s;};
+const tempSuit=t=>t==null?.5:clamp01(Math.exp(-Math.pow((t-29)/6,2)));
+
+function suitAt(d,i,area,adj){
+  adj=adj||{};
+  const r4=rainSum(d,i,28)*(1+(adj.rain||0)),r8=rainSum(d,i,56)*(1+(adj.rain||0)),r12=rainSum(d,i,84)*(1+(adj.rain||0));
+  const rain=clamp01((0.5*r4+0.5*r8)/350);
+  const ndwi=clamp01((r12/700)*(0.7+0.6*area.wlog)*(1+(adj.ndwi||0)));
+  const hum=clamp01((((d[i].hum||70)+(adj.hum||0))-55)/40);
+  const temp=tempSuit((d[i].tmean||29)+(adj.temp||0));
+  const msi=clamp01(WT.rain*rain+WT.ndwi*ndwi+WT.humidity*hum+WT.temp*temp+WT.urban*area.urban);
+  return {msi,parts:{rain,ndwi,hum,temp,urban:area.urban},raw:{r4,r8,r12,hum:d[i].hum,temp:d[i].tmean,wind:d[i].wind,wdir:d[i].wdir,month:d[i].date.getMonth()}};
+}
+const seasonalBase=date=>MONTHLY[date.getMonth()]/4.345;
+function predWeek(d,i,area,prev,adj){
+  const {msi}=suitAt(d,i,area,adj); let p=seasonalBase(d[i].date)*(0.6+3.4*msi);
+  const m=d[i].date.getMonth(); if(m>=5&&m<=9&&msi>0.65)p*=1.35;
+  if(prev!=null)p=0.55*p+0.45*prev; return {pred:Math.max(0,Math.round(p)),msi};
+}
+function band(v){return v>EXT?"ext":v>HIGH?"high":v>=MED?"mod":"low";}
+const bandTxt=b=>({low:tr("Low","কম"),mod:tr("Moderate","মাঝারি"),high:tr("High","উচ্চ"),ext:tr("Extreme","চরম")}[b]);
+const bandCol=b=>({low:"#2e7d32",mod:"#bd8400",high:"#e8590c",ext:"#7a0b86"}[b]);
+function riskPct(msi,wk1,month){return Math.round(clamp01(0.45*msi+0.35*clamp01(wk1/EXT)+0.20*(MONTHLY[month]/Math.max(...MONTHLY)))*100);}
+
+/* ===== trained ensemble inference (XGBoost-family trees + neural net) ===== */
+const M = (typeof window!=="undefined" && window.PROHORI_MODEL) ? window.PROHORI_MODEL : null;
+function _evalTree(t,x){let n=0;while(t.l[n]!==-1)n=(x[t.f[n]]<=t.th[n])?t.l[n]:t.r[n];return t.v[n];}
+function _trees(m,x){let s=m.init;for(const t of m.t)s+=m.lr*_evalTree(t,x);return s;}
+function _mlp(m,x){let a=x.map((v,i)=>(v-m.mean[i])/(m.scale[i]||1));
+  for(let k=0;k<m.W.length;k++){const W=m.W[k],b=m.b[k],out=new Array(b.length).fill(0);
+    for(let j=0;j<b.length;j++){let s=b[j];for(let i=0;i<a.length;i++)s+=a[i]*W[i][j];out[j]=s;}
+    a=(k<m.W.length-1)?out.map(v=>v>0?v:0):out;} return a[0];}
+function ensemblePred(h,x){const md=M.models["h"+h];const w=md.blend;
+  return Math.max(0, w*_trees(md.trees,x)+(1-w)*_mlp(md.mlp,x));}
+// build the 15-feature vector at "now" from live weather + climatology + case seed
+function featureVec(d,i,area,anchor,adj){
+  adj=adj||{};
+  const rain1=rainSum(d,i,7)*(1+(adj.rain||0)), r4=rainSum(d,i,28)*(1+(adj.rain||0)), r8=rainSum(d,i,56)*(1+(adj.rain||0));
+  let sun=0,hum=0,temp=0,ws=0,wd=0,n=0;
+  for(let k=Math.max(0,i-6);k<=i;k++){sun+=d[k].sun||6;hum+=d[k].hum||70;temp+=d[k].tmean||29;ws+=d[k].wind||0;wd+=d[k].wdir||0;n++;}
+  sun/=n; hum=(hum/n)+(adj.hum||0); temp=(temp/n)+(adj.temp||0); ws/=n; wd/=n;
+  const rad=wd*Math.PI/180, wu=ws*Math.cos(rad), wv=ws*Math.sin(rad);
+  const month=d[i].date.getMonth();             // 0-based
+  const ndwi=(M.ndwi_clim[month]??-0.1)*(1+(adj.ndwi||0));
+  const lag1=anchor!=null?anchor:(M.cases_clim[month]??50);
+  const lag2=anchor!=null?anchor:(M.cases_clim[(month+11)%12]??50);
+  const ms=Math.sin(2*Math.PI*(month+1)/12), mc=Math.cos(2*Math.PI*(month+1)/12);
+  // order must match training FEATURES
+  return [rain1,r4,r8,sun,hum,temp,wu,wv,M.urban,M.pop,ndwi,lag1,lag2,ms,mc];
+}
+function modelForecast(d,i,area,anchor,adj){
+  const x=featureVec(d,i,area,anchor,adj), out=[];
+  [1,2,3,4].forEach(h=>{const pred=Math.round(ensemblePred(h,x));const rmse=M.metrics["h"+h].RMSE;
+    out.push({h:h*7,pred,lo:Math.max(0,Math.round(pred-rmse)),hi:Math.round(pred+rmse),date:d[Math.min(d.length-1,i+h*7)].date});});
+  return out;
+}
+
+function summaryFor(d,area,adj){
+  const today=new Date(); let i=d.findIndex(x=>x.date>=new Date(today.getFullYear(),today.getMonth(),today.getDate()));
+  if(i<0)i=d.length-17; i=Math.max(1,i);
+  const anchor=(state.anchor!=null)?state.anchor:null;
+  let preds, conf=74;
+  if(M){                                  // trained ensemble path
+    preds=modelForecast(d,i,area,anchor,adj);
+    conf=Math.round((M.metrics.h1.R2||0.85)*100);
+  }else{                                  // heuristic fallback
+    let prev=predWeek(d,i,area,null,adj).pred;
+    preds=[];[7,14,21,28].forEach(h=>{const j=Math.min(d.length-1,i+h);const p=predWeek(d,j,area,prev,adj);preds.push({h,...p,date:d[j].date});prev=p.pred;});
+    preds.forEach(p=>{const hw=0.25+0.06*(p.h/7);p.lo=Math.max(0,Math.round(p.pred*(1-hw)));p.hi=Math.round(p.pred*(1+hw));});
+  }
+  const suit=suitAt(d,i,area,adj), wk1=preds[0].pred, peak=preds.reduce((a,b)=>b.pred>a.pred?b:a,preds[0]);
+  const m=d[i].date.getMonth(), pct=riskPct(suit.msi,wk1,m);
+  const ew=M?Math.round((preds[0].pred*0.6+(M.cases_clim[m]||0)*0.4)):predWeek(d,Math.min(d.length-1,i+4),area,wk1,adj).pred;
+  return {i,preds,wk1,lo:preds[0].lo,hi:preds[0].hi,peak,suit,pct,rb:band(wk1),
+    rising:peak.pred>wk1*1.12,daily:d,area,month:m,ew,ewRb:band(ew),conf,modeled:!!M};
+}
+
+/* ---------------- reasoning ---------------- */
+function reasons(s){
+  const r=s.suit.raw,out=[];
+  const wkNorm=RAIN_NORM[r.month]/4.345*4, ratio=wkNorm>0?r.r4/wkNorm:1, pctc=Math.round((ratio-1)*100);
+  out.push(ratio>1.25?{i:"🌧️",dir:1,t:tr(`Rainfall up ~<b>${Math.max(0,pctc)}%</b> vs seasonal normal (${Math.round(r.r4)} mm / 4 weeks).`,`বৃষ্টি স্বাভাবিকের চেয়ে ~<b>${N(Math.max(0,pctc))}%</b> বেশি (৪ সপ্তাহে ${N(Math.round(r.r4))} মিমি)।`),f:tr("More rain → more standing water → more breeding sites.","বেশি বৃষ্টি → বেশি জমা পানি → বেশি প্রজনন।")}
+    :{i:"🌧️",dir:ratio<.7?-1:0,t:tr(`Rainfall is ${ratio<.7?'below':'near'} normal (${Math.round(r.r4)} mm / 4 weeks).`,`বৃষ্টি ${ratio<.7?'কম':'প্রায় স্বাভাবিক'} (৪ সপ্তাহে ${N(Math.round(r.r4))} মিমি)।`),f:tr("Limits new breeding habitat.","নতুন প্রজননস্থল সীমিত।")});
+  const h=Math.round(r.hum||70);
+  out.push({i:"💧",dir:h>=80?1:h<65?-1:0,t:tr(`Humidity is <b>${h}%</b>.`,`আর্দ্রতা <b>${N(h)}%</b>।`),f:h>=80?tr("Adult mosquitoes survive longer in humid air.","আর্দ্র বাতাসে মশা বেশি বাঁচে।"):tr("Moderate effect on survival.","বেঁচে থাকায় মাঝারি প্রভাব।")});
+  out.push({i:"🛰️",dir:s.suit.parts.ndwi>.5?1:0,t:tr(`Water presence (NDWI proxy) is <b>${(s.suit.parts.ndwi*100).toFixed(0)}%</b> — ${aName(s.area)} has ${s.area.wlog>.7?'high':'moderate'} waterlogging.`,`পানির উপস্থিতি (NDWI) <b>${N((s.suit.parts.ndwi*100).toFixed(0))}%</b> — ${aName(s.area)}-এ জলাবদ্ধতা ${s.area.wlog>.7?'বেশি':'মাঝারি'}।`),f:tr("Stagnant water is the main Aedes habitat.","জমা পানিই প্রধান প্রজননস্থল।")});
+  const wd=r.wdir||0,ws=r.wind||0;
+  out.push({i:"🌬️",dir:ws>=6&&ws<=16?1:0,t:tr(`Wind ${ws.toFixed(0)} km/h from ${dirName(wd)}.`,`বাতাস ${N(ws.toFixed(0))} কিমি/ঘ, ${dirName(wd)} দিক থেকে।`),f:(ws>=6&&ws<=16)?tr("Gentle wind can carry mosquitoes to nearby areas.","মৃদু বাতাস মশা ছড়াতে পারে।"):tr("Wind is not a major factor now.","বাতাস এখন বড় কারণ নয়।")});
+  out.push(r.month>=5&&r.month<=9?{i:"📅",dir:1,t:tr("It is peak dengue season (monsoon).","এখন ডেঙ্গুর সর্বোচ্চ মৌসুম।"),f:tr("Historically Jul–Sep carry the most cases.","জুলাই–সেপ্টেম্বরে সর্বাধিক রোগী।")}:{i:"📅",dir:-1,t:tr("It is the cooler / drier season.","শীতল / শুষ্ক মৌসুম।"),f:tr("Transmission is usually lower.","সাধারণত সংক্রমণ কম।")});
+  out.sort((a,b)=>b.dir-a.dir); return out;
+}
+function dirName(d){const a=lang==="bn"?["উত্তর","উ-পূ","পূর্ব","দ-পূ","দক্ষিণ","দ-প","পশ্চিম","উ-প"]:["N","NE","E","SE","S","SW","W","NW"];return a[Math.round(d/45)%8];}
+
+/* ---------------- prevention (context-aware) ---------------- */
+function prevention(s){
+  const cards=[], r=s.suit.raw, wkNorm=RAIN_NORM[r.month]/4.345*4, ratio=wkNorm>0?r.r4/wkNorm:1;
+  if(ratio>1.2||r.r4>120) cards.push({i:"🌧️",h:tr("High rainfall","বেশি বৃষ্টি"),b:tr("After every rain, tip out water from pots, trays, lids, tyres and rooftops within 48 hours — eggs hatch fast.","প্রতি বৃষ্টির পর ৪৮ ঘণ্টার মধ্যে টব, ট্রে, ঢাকনা, টায়ার ও ছাদের পানি ফেলে দিন।")});
+  if((r.hum||70)>=78) cards.push({i:"💧",h:tr("High humidity","বেশি আর্দ্রতা"),b:tr("Mosquitoes are active longer. Use nets even for daytime naps and apply repellent on exposed skin.","মশা বেশি সক্রিয়। দিনের ঘুমেও মশারি ও খোলা ত্বকে রিপেলেন্ট ব্যবহার করুন।")});
+  if(s.suit.parts.ndwi>.45||s.area.wlog>.7) cards.push({i:"🛰️",h:tr("Water accumulation / NDWI","জলাবদ্ধতা / NDWI"),b:tr("This area waterlogs easily. Clear blocked drains, fill low spots, and report stagnant water on the map.","এই এলাকায় সহজে পানি জমে। নালা পরিষ্কার করুন, নিচু জায়গা ভরাট করুন, জমা পানি রিপোর্ট করুন।")});
+  if(s.area.urban>.85) cards.push({i:"🏙️",h:tr("Dense urban area","ঘনবসতি"),b:tr("Crowding raises exposure. Coordinate building-wide clean-ups and check rooftop tanks and lift pits.","ঘনবসতিতে ঝুঁকি বেশি। ভবনব্যাপী পরিচ্ছন্নতা ও ছাদের ট্যাংক/লিফট পিট দেখুন।")});
+  if(s.rb==="high"||s.rb==="ext") cards.push({i:"🏥",h:tr("Be case-ready","রোগীর প্রস্তুতি"),b:tr("Treat fever seriously: paracetamol only, fluids, test early. Authorities should larvicide and ready beds.","জ্বরে সতর্ক: শুধু প্যারাসিটামল, তরল, দ্রুত পরীক্ষা। কর্তৃপক্ষ লার্ভিসাইড ও শয্যা প্রস্তুত রাখুক।")});
+  if(!cards.length) cards.push({i:"✅",h:tr("Routine prevention","নিয়মিত প্রতিরোধ"),b:tr("Risk is low. Keep containers dry, screens intact, and stay alert as the season shifts.","ঝুঁকি কম। পাত্র শুকনো ও জানালায় নেট রাখুন, মৌসুম বদলে সতর্ক থাকুন।")});
+  return cards.slice(0,3);
+}
+
+/* ===================== RENDER ===================== */
+async function load(){
+  $("liveDot").className="dot";$("liveTxt").textContent=tr("loading…","লোড হচ্ছে…");
+  try{const d=await fetchWeather(state.area);
+    $("liveDot").className="dot";$("liveTxt").textContent=tr("live","লাইভ")+" · "+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    state.summary=summaryFor(d,state.area); state.sim={}; renderAll(); buildHeatmap(); checkAreas(false);
+  }catch(e){$("liveDot").className="dot off";$("liveTxt").textContent=tr("offline","অফলাইন");
+    $("vLevel").textContent=tr("Data unavailable","তথ্য নেই");$("vMeta").textContent=tr("Check your internet connection.","ইন্টারনেট সংযোগ দেখুন।");}
+}
+
+function renderAll(){
+  const s=state.summary; if(!s)return;
+  $("vArea").textContent=aName(state.area);
+  $("modelBadge").innerHTML = s.modeled
+    ? tr(`⚙ Trained ensemble · R²=${s.conf/100}`,`⚙ প্রশিক্ষিত মডেল · R²=${N((s.conf/100).toFixed(2))}`)
+    : tr("⚙ heuristic (model file not loaded)","⚙ হিউরিস্টিক");
+  $("verdict").className="verdict "+s.rb;
+  $("vLevel").textContent=bandTxt(s.rb)+" · "+N(s.pct)+"%";
+  $("vLevel").className="vk c-"+s.rb;
+  $("vMeta").innerHTML=tr(`Likely <b>${N(s.lo)}–${N(s.hi)}</b> cases this week, ${s.rising?'rising':'stable'}.`,`এই সপ্তাহে সম্ভাব্য <b>${N(s.lo)}–${N(s.hi)}</b> রোগী, ${s.rising?'বাড়ছে':'স্থিতিশীল'}।`);
+  $("confFill").style.width=s.conf+"%";$("confTxt").textContent=tr("Moderate","মাঝারি")+" ("+N(s.conf)+"%)";
+  $("vTip").innerHTML=(s.rb==="ext"||s.rb==="high")?tr("Act this week — remove standing water and protect against bites. See Prevention.","এই সপ্তাহেই ব্যবস্থা নিন — জমা পানি সরান ও কামড় থেকে বাঁচুন।"):s.rb==="mod"?tr("Good week for a clean-up. Stay alert.","পরিচ্ছন্নতার ভালো সময়। সতর্ক থাকুন।"):tr("Risk is low — keep routine prevention.","ঝুঁকি কম — নিয়মিত প্রতিরোধ।");
+  drawGauge($("gauge"),s.pct,bandCol(s.rb),36);
+  $("cPct").textContent=N(s.pct)+"%";$("cPct").className="v c-"+s.rb;$("cBand").innerHTML=`<span class="pill b-${s.rb}">${bandTxt(s.rb)}</span>`;
+  $("cMsi").textContent=N(s.suit.msi.toFixed(2));
+  $("cWk1").textContent=N(s.wk1);$("cRange").textContent=N(s.lo)+"–"+N(s.hi);
+  $("cEw").textContent=bandTxt(s.ewRb);$("cEw").className="v c-"+s.ewRb;$("cEwT").textContent=tr("~"+N(s.ew)+" cases in 4 days","৪ দিনে ~"+N(s.ew)+" রোগী");
+  // explanation card
+  const rs=reasons(s);
+  $("xcard").style.borderLeft="5px solid "+bandCol(s.rb);
+  $("xcard").innerHTML=`<div class="xh"><span class="xn">${aName(state.area)}</span><span class="pill b-${s.rb}">${bandTxt(s.rb)}</span><span class="xp c-${s.rb}">${N(s.pct)}%</span></div>
+    <div style="color:var(--muted);font-size:13px;margin:6px 0 4px">${tr("Main reasons, strongest first:","প্রধান কারণ, প্রভাব অনুযায়ী:")}</div>
+    ${rs.map(r=>`<div class="xreason"><span class="xi">${r.i}</span><span class="xt">${r.t}<span class="xf">${r.f}</span></span></div>`).join("")}`;
+  renderCal(); renderChange(); renderPrevention(); drawAnalytics();
+  renderAreas(); renderFeed(); renderSubs(); renderRepList(); renderCaseStat(); initSimulator();
+}
+
+function drawGauge(cv,pct,col,r){
+  if(!cv)return; const ctx=cv.getContext("2d"),w=cv.width,cx=w/2,cy=cv.height/2;r=r||(w/2-12);
+  ctx.clearRect(0,0,w,cv.height);ctx.lineWidth=10;ctx.lineCap="round";
+  ctx.strokeStyle="#e9e3d4";ctx.beginPath();ctx.arc(cx,cy,r,0.75*Math.PI,2.25*Math.PI);ctx.stroke();
+  ctx.strokeStyle=col;ctx.beginPath();ctx.arc(cx,cy,r,0.75*Math.PI,(0.75+1.5*pct/100)*Math.PI);ctx.stroke();
+  ctx.fillStyle=col;ctx.font="600 "+(r*0.55)+"px IBM Plex Mono";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(N(pct)+"%",cx,cy);
+}
+
+function renderCal(){
+  const max=Math.max(...MONTHLY),names=lang==="bn"?monthsBN:monthsEN,now=new Date().getMonth();
+  $("cal").innerHTML=MONTHLY.map((v,i)=>{const t=v/max,c=t>.75?"122,11,134":t>.5?"232,89,12":t>.3?"189,132,0":"46,125,50";
+    return `<div class="m" title="${tr('avg','গড়')} ${N(v)}" style="background:rgba(${c},${.08+t*.3});${i===now?'box-shadow:0 0 0 2px var(--teal)':''}"><div class="mn">${names[i]}</div><div class="mv" style="color:rgb(${c})">${N(v)}</div></div>`}).join("");
+}
+
+function renderChange(){
+  const s=state.summary,d=s.daily,i=s.i;
+  const yArea={...state.area}, yd=summaryFor(d.slice(0,d.length),state.area); // today
+  // yesterday: recompute with index-1
+  function atDay(idx){const suit=suitAt(d,idx,state.area);const wk=predWeek(d,idx,state.area,null).pred;return{rb:band(wk),pct:riskPct(suit.msi,wk,d[idx].date.getMonth()),
+    rain:rainSum(d,idx,7),hum:d[idx].hum||70,ndwi:suit.parts.ndwi*100,wk};}
+  const today=atDay(i), yest=atDay(Math.max(1,i-1));
+  $("chYest").innerHTML=`<span class="c-${yest.rb}">${bandTxt(yest.rb)}</span> · ${N(yest.pct)}%`;
+  $("chToday").innerHTML=`<span class="c-${today.rb}">${bandTxt(today.rb)}</span> · ${N(today.pct)}%`;
+  const mk=(label,a,b,unit,inv)=>{const dv=b-a,pc=a!=0?Math.round(dv/Math.abs(a)*100):0;const up=dv>0;const cls=(up!==!!inv)?"up":"dn2";
+    return `<div class="delta"><div class="dn">${label}</div><div class="dd ${Math.abs(pc)<1?'':cls}">${up?'▲':dv<0?'▼':'—'} ${N(Math.abs(pc))}% <span style="color:var(--faint);font-size:12px">(${unit})</span></div></div>`;};
+  $("chDeltas").innerHTML=
+    mk(tr("Rainfall (7-day)","বৃষ্টি"),yest.rain,today.rain,tr("mm","মিমি"),false)+
+    mk(tr("Humidity","আর্দ্রতা"),yest.hum,today.hum,"%",false)+
+    mk(tr("Water / NDWI","পানি/NDWI"),yest.ndwi,today.ndwi,"%",false)+
+    mk(tr("Risk score","ঝুঁকি"),yest.pct,today.pct,"%",false);
+}
+
+function renderPrevention(){
+  $("prevCards").innerHTML=prevention(state.summary).map(c=>`<div class="card"><div style="font-size:26px">${c.i}</div>
+    <div class="dsp" style="font-size:16px;font-weight:600;margin:6px 0 4px">${c.h}</div><div style="font-size:13.5px;color:var(--muted)">${c.b}</div></div>`).join("");
+}
+
+/* ---------------- analytics charts ---------------- */
+const GRID={color:"rgba(20,33,29,.07)"},TICK={color:"#5d6e67",font:{family:"IBM Plex Mono",size:10}};
+function destroy(k){if(state.charts[k])state.charts[k].destroy();}
+function seriesByDay(){const s=state.summary,d=s.daily,pts=[];
+  for(let i=28;i<s.i;i+=2){const suit=suitAt(d,i,state.area);const wk=predWeek(d,i,state.area,null).pred;
+    pts.push({hum:d[i].hum||70,rain:rainSum(d,i,14),ndwi:suit.parts.ndwi*100,wind:d[i].wind||0,wdir:d[i].wdir||0,risk:riskPct(suit.msi,wk,d[i].date.getMonth())});}
+  return pts;}
+function scatter(cid,xs,col,xl){const pts=seriesByDay();destroy(cid);
+  state.charts[cid]=new Chart($(cid),{type:"scatter",data:{datasets:[{data:pts.map(p=>({x:p[xs],y:p.risk})),backgroundColor:col,pointRadius:3.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:xl,color:"#5d6e67"},grid:GRID,ticks:TICK},y:{title:{display:true,text:tr("Risk %","ঝুঁকি %"),color:"#5d6e67"},grid:GRID,ticks:TICK,min:0,max:100}}}});}
+function drawAnalytics(){
+  scatter("chHum","hum","rgba(58,160,224,.6)",tr("Humidity %","আর্দ্রতা %"));
+  scatter("chRain","rain","rgba(14,124,107,.6)",tr("Rainfall (14-day mm)","বৃষ্টি (১৪ দিন মিমি)"));
+  scatter("chNdwi","ndwi","rgba(122,11,134,.55)","NDWI %");
+  // wind: avg risk by direction sector
+  const pts=seriesByDay(),sec=Array.from({length:8},()=>({s:0,n:0}));
+  pts.forEach(p=>{const k=Math.round(p.wdir/45)%8;sec[k].s+=p.risk;sec[k].n++;});
+  const labels=(lang==="bn"?["উত্তর","উ-পূ","পূর্ব","দ-পূ","দক্ষিণ","দ-প","পশ্চিম","উ-প"]:["N","NE","E","SE","S","SW","W","NW"]);
+  destroy("chWind");
+  state.charts.chWind=new Chart($("chWind"),{type:"polarArea",data:{labels,datasets:[{data:sec.map(x=>x.n?+(x.s/x.n).toFixed(0):0),
+    backgroundColor:sec.map((_,k)=>`hsla(${180-k*14},60%,45%,.55)`)}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:10},color:"#5d6e67"}}},scales:{r:{ticks:{display:false},grid:GRID}}}});
+  // captions
+  const corr=(a,b)=>{const n=a.length,ma=a.reduce((x,y)=>x+y)/n,mb=b.reduce((x,y)=>x+y)/n;let s=0,sa=0,sb=0;for(let i=0;i<n;i++){s+=(a[i]-ma)*(b[i]-mb);sa+=(a[i]-ma)**2;sb+=(b[i]-mb)**2;}return s/Math.sqrt(sa*sb||1);};
+  const hum=pts.map(p=>p.hum),rain=pts.map(p=>p.rain),ndwi=pts.map(p=>p.ndwi),risk=pts.map(p=>p.risk);
+  $("hHum").innerHTML=tr(`As humidity rises, risk tends to rise (correlation ${corr(hum,risk).toFixed(2)}). Humid air lets mosquitoes live longer.`,`আর্দ্রতা বাড়লে ঝুঁকি বাড়ে (সম্পর্ক ${N(corr(hum,risk).toFixed(2))})। আর্দ্র বাতাসে মশা বেশি বাঁচে।`);
+  $("hRain").innerHTML=tr(`More accumulated rain → more breeding water → higher risk (correlation ${corr(rain,risk).toFixed(2)}).`,`বেশি জমা বৃষ্টি → বেশি প্রজনন পানি → বেশি ঝুঁকি (সম্পর্ক ${N(corr(rain,risk).toFixed(2))})।`);
+  $("hNdwi").innerHTML=tr(`Higher NDWI means more surface water — strongly tied to breeding (correlation ${corr(ndwi,risk).toFixed(2)}).`,`বেশি NDWI মানে বেশি পানি — প্রজননের সাথে দৃঢ় সম্পর্ক (${N(corr(ndwi,risk).toFixed(2))})।`);
+  $("hWind").innerHTML=tr("Average risk by wind direction. Gentle winds can disperse mosquitoes toward downwind areas.","বাতাসের দিক অনুযায়ী গড় ঝুঁকি। মৃদু বাতাস মশা ছড়াতে পারে।");
+}
+
+/* ---------------- heatmap + hotspots ---------------- */
+let heatLayer=null;
+async function fetchAreaWX(a){
+  if(state.awx&&state.awx[a.id])return state.awx[a.id];
+  state.awx=state.awx||{};
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${a.lat}&longitude=${a.lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m&timezone=Asia%2FDhaka`;
+    const r=await fetch(u); const c=(await r.json()).current;
+    state.awx[a.id]={temp:c.temperature_2m,hum:c.relative_humidity_2m,rain:c.precipitation,wind:c.wind_speed_10m,wdir:c.wind_direction_10m};
+  }catch(e){const d=state.wcache[a.p];const i=d?d.length-17:0;state.awx[a.id]=d?{temp:d[i].tmean,hum:d[i].hum,rain:d[i].rain,wind:d[i].wind,wdir:d[i].wdir}:{temp:30,hum:75,rain:0,wind:8,wdir:180};}
+  return state.awx[a.id];
+}
+function wxGlyph(wx){
+  if(wx.rain>0.6) return {g:"🌧️",cls:"rain",lab:N(wx.rain.toFixed(1))+"mm"};
+  if(wx.temp>33)  return {g:"☀️",cls:"sun",lab:N(wx.temp.toFixed(0))+"°C"};
+  if(wx.hum>=82)  return {g:"💦",cls:"hum",lab:N(wx.hum.toFixed(0))+"%"};
+  if(wx.wind>=18) return {g:"💨",cls:"wind",lab:N(wx.wind.toFixed(0))+"km/h"};
+  return {g:"⛅",cls:"calm",lab:N(wx.temp.toFixed(0))+"°C"};
+}
+function wxMarkerHtml(a,s,wx){
+  const gl=wxGlyph(wx),col=bandCol(s.rb);
+  let extra="";
+  if(gl.cls==="rain")extra='<div class="rain">'+Array.from({length:6}).map(()=>`<i style="left:${(Math.random()*40+3).toFixed(0)}px;animation-delay:${(Math.random()*.6).toFixed(2)}s"></i>`).join("")+'</div>';
+  if(gl.cls==="sun")extra='<div class="sun"></div>';
+  if(gl.cls==="wind")extra='<div class="wind">»»</div>';
+  return `<div class="wxmark" style="color:${col}" title="${aName(a)}"><div class="ring"></div>${extra}<span>${gl.g}</span><span class="wxlabel" style="color:${col}">${aName(a)} · ${gl.lab}</span></div>`;
+}
+async function buildHeatmap(){
+  if(!state.map){try{
+    state.map=L.map('bigmap',{scrollWheelZoom:true}).setView([state.area.lat,state.area.lon],11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(state.map);
+    state.layers.risk=L.layerGroup().addTo(state.map); state.layers.hot=L.layerGroup(); state.layers.wx=L.layerGroup().addTo(state.map);
+  }catch(e){$("bigmap").innerHTML='<div class="empty" style="padding:60px">'+tr("Map could not load (needs internet).","মানচিত্র লোড হয়নি (ইন্টারনেট প্রয়োজন)।")+'</div>';return;}}
+  const d=state.wcache[state.area.p]; if(!d)return;
+  state.layers.risk.clearLayers(); state.layers.hot.clearLayers(); state.layers.wx.clearLayers();
+  const peers=AREAS.filter(a=>a.p===state.area.p);
+  await Promise.all(peers.map(a=>fetchAreaWX(a)));
+  peers.forEach(a=>{const s=summaryFor(d,a), wx=state.awx[a.id];
+    L.circleMarker([a.lat,a.lon],{radius:9+s.pct/7,color:"#fff",weight:1.5,fillColor:bandCol(s.rb),fillOpacity:.7})
+      .bindPopup(`<b>${aName(a)}</b><br>${bandTxt(s.rb)} · ${N(s.pct)}%<br>${tr('~'+N(s.wk1)+' cases/wk','~'+N(s.wk1)+' রোগী/সপ্তাহ')}<hr style="margin:4px 0">🌡️ ${N(wx.temp.toFixed(0))}°C · 💧 ${N(wx.hum.toFixed(0))}% · 🌧️ ${N(wx.rain.toFixed(1))}mm · 💨 ${N(wx.wind.toFixed(0))} ${dirName(wx.wdir)}`).addTo(state.layers.risk);
+    // animated weather marker
+    const icon=L.divIcon({className:"",html:wxMarkerHtml(a,s,wx),iconSize:[46,46],iconAnchor:[23,23]});
+    const wm=L.marker([a.lat,a.lon],{icon}).addTo(state.layers.wx);
+    wm.on("mouseover",()=>sfx.buzz()); wm.on("click",()=>sfx.buzz());
+    if(s.suit.parts.ndwi>.45||a.wlog>.72){const r=600+s.suit.parts.ndwi*900;
+      L.circle([a.lat,a.lon],{radius:r,color:"#7a0b86",weight:1,fillColor:"#b3083e",fillOpacity:.18})
+        .bindPopup(`<b>${tr('Breeding hotspot','প্রজননস্থল')}: ${aName(a)}</b><br>${tr('Water/NDWI','পানি/NDWI')} ${N((s.suit.parts.ndwi*100).toFixed(0))}%<br>${tr('Waterlogging','জলাবদ্ধতা')} ${N((a.wlog*100).toFixed(0))}%`).addTo(state.layers.hot);}
+  });
+  state.reports.forEach(rp=>{if(rp.kind!=="breed")return;
+    L.marker([rp.lat,rp.lng]).bindPopup(`💧 ${rp.desc||rp.type}<br><small>${tr('citizen report','নাগরিক রিপোর্ট')}</small>`).addTo(state.layers.hot);});
+  // patient case clusters (anonymised)
+  (state.cases||[]).filter(c=>c.parent===state.area.p).forEach(c=>{
+    L.circleMarker([c.lat,c.lng],{radius:7,color:"#fff",weight:1.5,fillColor:"#7a0b86",fillOpacity:.9})
+      .bindPopup(`🌡️ ${tr('Reported case','রিপোর্টকৃত রোগী')}<br><small>${c.method} · ${c.status}</small>`).addTo(state.layers.hot);});
+  $("legend").innerHTML=["low","mod","high","ext"].map(b=>`<span><i style="background:${bandCol(b)}"></i>${bandTxt(b)}</span>`).join("")+
+    `<span><i style="background:#b3083e;opacity:.4"></i>${tr("Hotspot/Case","হটস্পট/রোগী")}</span><span>🌦️ ${tr("live weather per area","প্রতি এলাকার আবহাওয়া")}</span>`;
+}
+function toggleLayer(btn,layer){const b=$(btn);b.classList.toggle("act");if(!state.map||!state.layers[layer])return;
+  if(b.classList.contains("act"))state.map.addLayer(state.layers[layer]);else state.map.removeLayer(state.layers[layer]);}
+$("layRisk").onclick=()=>toggleLayer("layRisk","risk");
+$("layHot").onclick=()=>toggleLayer("layHot","hot");
+$("layWx").onclick=()=>toggleLayer("layWx","wx");
+
+/* ---------------- before/after + simulator ---------------- */
+function baUpdate(v){
+  const water=$("baWater"),cap=$("baCaption"); water.style.height=(v*0.55)+"%";
+  // mosquitoes
+  [...document.querySelectorAll('.ba .mos')].forEach(m=>m.remove());
+  const nm=Math.round(v/18); for(let k=0;k<nm;k++){const m=document.createElement('div');m.className='mos';m.textContent='🦟';
+    m.style.left=(8+Math.random()*84)+'%';m.style.bottom=(46+Math.random()*120)+'px';m.style.opacity=Math.min(1,v/40);
+    $("ba").appendChild(m);}
+  // rain
+  const rain=$("baRain");rain.innerHTML= v>10?Array.from({length:18}).map(()=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*0.8).toFixed(2)}s"></span>`).join(""):"";
+  cap.textContent= v<15?tr("Dry — little standing water, few mosquitoes.","শুষ্ক — সামান্য জমা পানি, কম মশা।"):v<55?tr("Rain fills containers → water accumulates → mosquitoes begin breeding.","বৃষ্টিতে পাত্র ভরে → পানি জমে → মশা বাড়তে শুরু করে।"):tr("Heavy waterlogging → rapid breeding → dengue risk climbs.","ভারী জলাবদ্ধতা → দ্রুত প্রজনন → ডেঙ্গু ঝুঁকি বাড়ে।");
+}
+$("baSlider").oninput=e=>baUpdate(+e.target.value);
+
+function initSimulator(){ ["sRain","sHum","sNdwi","sTemp"].forEach(id=>{$(id).value=0;}); $("sRainV").textContent="0%";$("sHumV").textContent="0%";$("sNdwiV").textContent="0%";$("sTempV").textContent="0°"; simUpdate(); }
+function simUpdate(){
+  const adj={rain:+$("sRain").value/100,hum:+$("sHum").value,ndwi:+$("sNdwi").value/100,temp:+$("sTemp").value};
+  $("sRainV").textContent=($("sRain").value>0?"+":"")+N($("sRain").value)+"%";
+  $("sHumV").textContent=($("sHum").value>0?"+":"")+N($("sHum").value)+"%";
+  $("sNdwiV").textContent=($("sNdwi").value>0?"+":"")+N($("sNdwi").value)+"%";
+  $("sTempV").textContent=($("sTemp").value>0?"+":"")+N($("sTemp").value)+"°";
+  const d=state.wcache[state.area.p]; if(!d)return;
+  const s=summaryFor(d,state.area,adj);
+  drawGauge($("simGauge"),s.pct,bandCol(s.rb),60);
+  $("simLevel").innerHTML=`<span class="c-${s.rb}">${bandTxt(s.rb)}</span>`;
+  $("simNote").textContent=tr(`Simulated weekly cases ≈ ${N(s.wk1)} (range ${N(s.lo)}–${N(s.hi)}).`,`সিমুলেটেড সাপ্তাহিক রোগী ≈ ${N(s.wk1)} (পরিসর ${N(s.lo)}–${N(s.hi)})।`);
+}
+["sRain","sHum","sNdwi","sTemp"].forEach(id=>$(id).addEventListener("input",simUpdate));
+$("simReset").onclick=initSimulator;
+
+/* ---------------- assistant ---------------- */
+function chatPush(t,who){const m=document.createElement("div");m.className="msg "+who;m.innerHTML=t;$("chatlog").appendChild(m);$("chatlog").scrollTop=$("chatlog").scrollHeight;}
+function answer(q){
+  const ql=q.toLowerCase(); let area=AREAS.find(a=>ql.includes(a.n.toLowerCase())||q.includes(a.bn))||state.area;
+  const d=state.wcache[area.p]||state.wcache[state.area.p]; if(!d)return tr("I'm still loading live data — try again in a moment.","লাইভ তথ্য লোড হচ্ছে — একটু পরে আবার চেষ্টা করুন।");
+  const s=summaryFor(d,area);
+  if(/precaution|protect|prevent|করণীয়|প্রতিরোধ|সতর্ক/.test(ql)){
+    return tr(`For <b>${aName(area)}</b> (${bandTxt(s.rb)} risk): `,`<b>${aName(area)}</b> (${bandTxt(s.rb)} ঝুঁকি)-এর জন্য: `)+prevention(s).map(c=>c.b).join(" ");
+  }
+  if(/why|কেন/.test(ql)){const r=reasons(s).slice(0,3);
+    return tr(`<b>${aName(area)}</b> is ${bandTxt(s.rb)} (${N(s.pct)}%) mainly because: `,`<b>${aName(area)}</b> ${bandTxt(s.rb)} (${N(s.pct)}%) — মূল কারণ: `)+r.map(x=>x.t.replace(/<\/?b>/g,"")).join(" ");
+  }
+  // default: risk
+  return tr(`<b>${aName(area)}</b> — dengue risk is <b>${bandTxt(s.rb)} (${N(s.pct)}%)</b> this week, about ${N(s.lo)}–${N(s.hi)} cases. ${s.rising?'It may rise over the next weeks.':'It looks stable.'} Ask “why” or “precautions” for more.`,
+    `<b>${aName(area)}</b> — এই সপ্তাহে ডেঙ্গু ঝুঁকি <b>${bandTxt(s.rb)} (${N(s.pct)}%)</b>, প্রায় ${N(s.lo)}–${N(s.hi)} রোগী। ${s.rising?'সামনে বাড়তে পারে।':'স্থিতিশীল।'} “কেন” বা “করণীয়” জিজ্ঞাসা করুন।`);
+}
+function send(q){if(!q.trim())return;chatPush(q,"u");$("chatInput").value="";setTimeout(()=>chatPush(answer(q),"a"),250);}
+$("chatSend").onclick=()=>send($("chatInput").value);
+$("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")send($("chatInput").value);});
+function renderChips(){const ex=lang==="bn"?["মিরপুরে ঝুঁকি কত?","উত্তরায় কেন বাড়ছে?","এই সপ্তাহে করণীয়?"]:["Risk in Mirpur?","Why rising in Uttara?","Precautions this week?"];
+  $("chips").innerHTML=ex.map(t=>`<span class="chip">${t}</span>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>send(c.textContent));}
+
+/* ---------------- reports ---------------- */
+function initRepMap(){if(state.repmap)return;try{
+  state.repmap=L.map('repmap',{scrollWheelZoom:false}).setView([state.area.lat,state.area.lon],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OSM'}).addTo(state.repmap);
+  state.repmap.on('click',e=>{if(state.repPin)state.repmap.removeLayer(state.repPin);state.repPin=L.marker(e.latlng).addTo(state.repmap);state.repPinLL=e.latlng;});
+}catch(e){$("repmap").innerHTML='<div class="empty">'+tr("Map needs internet.","ইন্টারনেট প্রয়োজন।")+'</div>';}}
+$("breedTypes").onclick=e=>{const t=e.target.closest(".rtype");if(!t)return;state.breedType=t.dataset.t;$("breedTypes").querySelectorAll(".rtype").forEach(x=>x.classList.toggle("act",x===t));};
+$("bImg").onchange=e=>{state.bImgs=[];$("bThumbs").innerHTML="";[...e.target.files].slice(0,3).forEach(f=>{const r=new FileReader();r.onload=()=>{state.bImgs.push(r.result);const im=document.createElement("img");im.src=r.result;$("bThumbs").appendChild(im);};r.readAsDataURL(f);});};
+$("bSubmit").onclick=()=>{const ll=state.repPinLL||{lat:state.area.lat,lng:state.area.lon};
+  state.reports.push({kind:"breed",type:state.breedType,desc:$("bDesc").value.trim(),addr:$("bAddr").value.trim(),lat:ll.lat,lng:ll.lng,area:state.area.p,ts:Date.now()});
+  store.set("dp2_reports",state.reports);$("bDesc").value="";$("bAddr").value="";$("bThumbs").innerHTML="";state.bImgs=[];
+  if(state.repPin){state.repmap.removeLayer(state.repPin);state.repPin=null;} renderRepList();buildHeatmap();};
+$("cSubmit").onclick=()=>{$("cMsg").textContent=tr("✓ Demo only: an anonymised case count would be queued for verification by a backend. No personal data was stored.","✓ শুধু ডেমো: একটি বেনামি সংখ্যা যাচাইয়ের জন্য সংরক্ষিত হতো। কোনো ব্যক্তিগত তথ্য রাখা হয়নি।");};
+$("tabBreed").onclick=()=>{$("tabBreed").classList.add("act");$("tabCase").classList.remove("act");$("breedForm").style.display="";$("caseForm").style.display="none";setTimeout(()=>{if(state.repmap)state.repmap.invalidateSize();},50);};
+$("tabCase").onclick=()=>{$("tabCase").classList.add("act");$("tabBreed").classList.remove("act");$("breedForm").style.display="none";$("caseForm").style.display="";};
+function renderRepList(){const mine=state.reports.filter(r=>r.area===state.area.p).slice(-6).reverse();
+  const ic={water:"💧",drain:"🕳️",construction:"🏗️",container:"🪣"};
+  $("repList").innerHTML=mine.length?`<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${tr("Recent reports","সাম্প্রতিক রিপোর্ট")}</div>`+mine.map(r=>`<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--line2)">${ic[r.type]||"📍"} ${r.desc||r.type} <span class="mono" style="float:right;color:var(--faint)">${new Date(r.ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}</span></div>`).join(""):"";}
+
+/* ---------------- alerts / subscribe ---------------- */
+async function areaSum(a){const d=await fetchWeather(a);return {area:a,...summaryFor(d,a)};}
+function bulletin(s){const lvl=bandTxt(s.rb);return {area:s.area.id,level:s.rb,title:`${aName(s.area)} — ${lvl}`,
+  now:tr(`Risk ${lvl} (${N(s.pct)}%), ~${N(s.wk1)} cases (${N(s.lo)}–${N(s.hi)}).`,`ঝুঁকি ${lvl} (${N(s.pct)}%), ~${N(s.wk1)} রোগী (${N(s.lo)}–${N(s.hi)})।`),
+  todo:(s.rb==="high"||s.rb==="ext")?tr("Remove standing water today, use nets, seek care for fever.","আজই জমা পানি সরান, মশারি, জ্বরে চিকিৎসা।"):s.rb==="mod"?tr("Weekly clean-up; cover stored water.","সাপ্তাহিক পরিচ্ছন্নতা; পানি ঢাকুন।"):tr("Routine prevention.","নিয়মিত প্রতিরোধ।"),
+  ahead:s.rising?tr(`May rise to ~${N(s.peak.pred)} within ${N(s.peak.h/7)} weeks.`,`${N(s.peak.h/7)} সপ্তাহে ~${N(s.peak.pred)} পর্যন্ত হতে পারে।`):tr("Likely stable for 4 weeks.","৪ সপ্তাহ স্থিতিশীল।")};}
+function renderAreas(){$("areaGrid").innerHTML=AREAS.filter(a=>a.p===state.area.p).map(a=>{const on=state.following.has(a.id);
+  return `<div class="achip ${on?'on':''}" data-a="${a.id}"><span class="box">${on?'✓':''}</span><span>${aName(a)}</span><span class="st" data-st="${a.id}"></span></div>`}).join("");
+  $("areaGrid").querySelectorAll(".achip").forEach(ch=>ch.onclick=()=>{const id=ch.dataset.a;const adding=!state.following.has(id);
+    adding?state.following.add(id):state.following.delete(id);store.set("dp2_follow",[...state.following]);renderAreas();if(adding)checkOne(id,true).then(()=>{state.lastChecked=new Date();renderFeed();});});}
+function renderFeed(){const f=$("feed");
+  const stamp=state.lastChecked?`<div class="mono" style="font-size:11px;color:var(--faint);margin-bottom:7px">⟳ ${tr("updated","হালনাগাদ")} ${state.lastChecked.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>`:"";
+  if(!state.alertLog.length){f.innerHTML=stamp+`<div class="empty">${tr("No alerts yet.","এখনো নেই।")}</div>`;return;}
+  f.innerHTML=stamp+state.alertLog.slice(0,10).map(a=>`<div class="feeditem ${a.level}"><div class="fh"><b>${a.title}</b><span class="ts">${a.ts}</span></div>
+    <div class="ln"><span class="ic">●</span><span><span class="lab">${tr("Now","এখন")}</span>${a.now}</span></div>
+    <div class="ln"><span class="ic">→</span><span><span class="lab">${tr("Do","করণীয়")}</span>${a.todo}</span></div>
+    <div class="ln"><span class="ic">⤴</span><span><span class="lab">${tr("Ahead","সামনে")}</span>${a.ahead}</span></div></div>`).join("");}
+function pushAlert(b,notify){state.alertLog.unshift({...b,ts:new Date().toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})});
+  state.alertLog=state.alertLog.slice(0,25);store.set("dp2_alerts",state.alertLog);renderFeed();
+  const st=document.querySelector(`[data-st="${b.area}"]`);if(st)st.style.background=bandCol(b.level);
+  if(notify&&"Notification"in window&&Notification.permission==="granted"){try{new Notification("🦟 "+b.title,{body:b.now+" → "+b.todo,tag:"dp-"+b.area,renotify:true})}catch(e){}}}
+async function checkOne(id,force){const a=byId(id);if(!a)return;try{const s=await areaSum(a);const b=bulletin(s);
+  const isNew=state.lastNotified[id]!==s.rb;const notify=s.rb!=="low"&&(isNew||force);
+  if(notify||force)pushAlert(b,notify);else{const st=document.querySelector(`[data-st="${id}"]`);if(st)st.style.background=bandCol(s.rb);}
+  state.lastNotified[id]=s.rb;}catch(e){}}
+async function checkAreas(force){const ids=[...state.following];if(!ids.length){state.lastChecked=new Date();renderFeed();return;}
+  $("checkNow").disabled=true;
+  for(const id of ids)await checkOne(id,force);
+  state.lastChecked=new Date();renderFeed();$("checkNow").disabled=false;}
+function setPerm(p){const d=$("permDot"),t=$("permTxt");if(p==="granted"){d.className="dot";t.textContent=tr("on","চালু");}else if(p==="denied"){d.className="dot off";t.textContent=tr("blocked","বন্ধ");}else{d.className="dot off";t.textContent=tr("off","বন্ধ");}}
+$("enableNotif").onclick=async()=>{if(!("Notification"in window))return;const p=await Notification.requestPermission();setPerm(p);if(p==="granted"){new Notification("Dengue Prohori ✓",{body:tr("Alerts enabled.","সতর্কতা চালু।")});checkAreas(false);}};
+$("checkNow").onclick=()=>checkAreas(true);
+$("testNotif").onclick=()=>{const a=byId([...state.following][0])||state.area;pushAlert(bulletin({area:a,rb:"high",pct:78,wk1:438,lo:300,hi:590,peak:{pred:610,h:21},rising:true}),true);};
+/* subscription */
+function renderSubs(){$("subArea").innerHTML=AREAS.map(a=>`<option value="${a.id}">${aName(a)}</option>`).join("");
+  $("subList").innerHTML=state.subs.length?state.subs.map((s,i)=>`<div style="font-size:13px;padding:5px 0;border-bottom:1px solid var(--line2)">📧 ${s.email} → <b>${aName(byId(s.area)||{n:s.area,bn:s.area})}</b> <span style="float:right;cursor:pointer;color:var(--red)" data-rm="${i}">✕</span></div>`).join(""):`<div class="empty">${tr("No subscriptions yet.","এখনো সাবস্ক্রিপশন নেই।")}</div>`;
+  $("subList").querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{state.subs.splice(+x.dataset.rm,1);store.set("dp2_subs",state.subs);renderSubs();});}
+$("subBtn").onclick=()=>{const e=$("subEmail").value.trim();if(!/^[^@]+@[^@]+\.[^@]+$/.test(e)){$("subEmail").style.borderColor="var(--red)";return;}
+  $("subEmail").style.borderColor="";state.subs.push({email:e,area:$("subArea").value,ts:Date.now()});store.set("dp2_subs",state.subs);$("subEmail").value="";renderSubs();
+  chatPushNote(tr("✓ Subscribed (demo). Real email delivery requires a backend — see the roadmap.","✓ সাবস্ক্রাইব হয়েছে (ডেমো)। প্রকৃত ইমেইলের জন্য ব্যাকএন্ড দরকার।"));};
+function chatPushNote(t){const n=document.createElement("div");n.style.cssText="font-size:12.5px;color:var(--teal-deep);margin-top:8px";n.textContent=t;$("subList").parentElement.appendChild(n);setTimeout(()=>n.remove(),4000);}
+
+/* ---------------- language / size / cursor ---------------- */
+function setLang(l){lang=l;document.body.className=document.body.className.replace(/lang-\w+/,"lang-"+l);document.documentElement.lang=l;
+  $("enBtn").classList.toggle("act",l==="en");$("bnBtn").classList.toggle("act",l==="bn");
+  buildAreaSelect();renderChips();$("chatlog").innerHTML="";chatPush(tr("Hi! Ask me about dengue risk in any area.","হ্যালো! যেকোনো এলাকার ডেঙ্গু ঝুঁকি জিজ্ঞাসা করুন।"),"a");
+  if(state.summary){renderAll();buildHeatmap();}
+  if("Notification"in window)setPerm(Notification.permission);}
+$("enBtn").onclick=()=>setLang("en");$("bnBtn").onclick=()=>setLang("bn");
+$("szBtn").onclick=()=>{document.body.classList.toggle("tbig");$("szBtn").textContent=document.body.classList.contains("tbig")?"A−":"A+";};
+$("mosqBtn").onclick=()=>{document.body.classList.toggle("mosq");$("mosqBtn").style.background=document.body.classList.contains("mosq")?"var(--teal-soft)":"#fff";};
+
+/* ---------------- area selector ---------------- */
+function buildAreaSelect(){const sel=$("areaSel"),cur=sel.value;
+  const groups={};AREAS.forEach(a=>{(groups[a.p]=groups[a.p]||[]).push(a);});
+  sel.innerHTML=Object.entries(groups).map(([p,arr])=>`<optgroup label="${p}">`+arr.map(a=>`<option value="${a.id}">${aName(a)}</option>`).join("")+`</optgroup>`).join("");
+  sel.value=cur||state.area.id;
+  sel.onchange=()=>{state.area=byId(sel.value);state.summary=null;
+    if(state.map)state.map.setView([state.area.lat,state.area.lon],11);
+    if(state.repmap)state.repmap.setView([state.area.lat,state.area.lon],12);
+    load();};
+}
+
+/* ---------------- sound (Web Audio, synthesized) ---------------- */
+const sfx=(()=>{
+  let ctx, rainNode;
+  const ac=()=>{try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();return ctx;}catch(e){return null;}};
+  function tone(freq,dur,type,vol){if(!state.soundOn)return;const c=ac();if(!c)return;
+    const o=c.createOscillator(),g=c.createGain();o.type=type||"sine";o.frequency.value=freq;
+    g.gain.value=0;o.connect(g);g.connect(c.destination);const t=c.currentTime;
+    g.gain.linearRampToValueAtTime(vol||.06,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.start(t);o.stop(t+dur);}
+  return {
+    buzz(){if(!state.soundOn)return;const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();
+      o.type="sawtooth";o.frequency.value=620;const t=c.currentTime;o.frequency.linearRampToValueAtTime(540,t+.18);
+      g.gain.value=.03;o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.18);},
+    chime(){tone(880,.18,"sine",.07);setTimeout(()=>tone(1175,.25,"sine",.06),120);},
+    click(){tone(420,.05,"triangle",.04);},
+    rain(on){if(!state.soundOn){return;}const c=ac();if(!c)return;
+      if(on&&!rainNode){const bufSize=2*c.sampleRate,buf=c.createBuffer(1,bufSize,c.sampleRate),out=buf.getChannelData(0);
+        for(let i=0;i<bufSize;i++)out[i]=(Math.random()*2-1)*.4;
+        const src=c.createBufferSource();src.buffer=buf;src.loop=true;const f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=1100;
+        const g=c.createGain();g.gain.value=.05;src.connect(f);f.connect(g);g.connect(c.destination);src.start();rainNode={src,g};}
+      else if(!on&&rainNode){rainNode.g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.4);setTimeout(()=>{try{rainNode.src.stop();}catch(e){}rainNode=null;},450);}}
+  };
+})();
+$("soundBtn").onclick=()=>{state.soundOn=!state.soundOn;$("soundBtn").textContent=state.soundOn?"🔊":"🔇";$("soundBtn").style.background=state.soundOn?"var(--teal-soft)":"#fff";if(state.soundOn)sfx.chime();else sfx.rain(false);};
+
+/* ---------------- notices + admin ---------------- */
+function renderNotices(){
+  const ic={info:"ℹ️",warning:"⚠️",urgent:"🚨"};
+  $("noticeList").innerHTML=state.notices.map((n,i)=>`<div class="notice ${n.level}"><span class="ni">${ic[n.level]}</span>
+    <span class="nt"><b>${n.title}</b><div>${n.body}</div></span><span class="nx" data-rm="${i}">✕</span></div>`).join("");
+  $("noticeList").querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{state.notices.splice(+x.dataset.rm,1);store.set("dp2_notices",state.notices);renderNotices();});
+}
+$("adminBtn").onclick=()=>{const p=$("adminPanel");
+  if(p.style.display==="none"){const code=prompt(tr("Admin passcode (demo: 1234)","অ্যাডমিন পাসকোড (ডেমো: 1234)"));
+    if(code==="1234"){p.style.display="";sfx.click();}else if(code!=null){alert(tr("Wrong passcode.","ভুল পাসকোড।"));}}
+  else p.style.display="none";};
+$("adExit").onclick=()=>{$("adminPanel").style.display="none";};
+$("adPost").onclick=()=>{const t=$("adTitle").value.trim(),b=$("adBody").value.trim();if(!t&&!b)return;
+  state.notices.unshift({level:$("adType").value,title:t||tr("Notice","নোটিশ"),body:b,ts:Date.now()});
+  state.notices=state.notices.slice(0,8);store.set("dp2_notices",state.notices);$("adTitle").value="";$("adBody").value="";renderNotices();sfx.chime();};
+
+/* ---------------- interactive ecosystem ---------------- */
+function ecoRender(){
+  const e=state.eco;
+  $("ecoPuddle").style.height=Math.min(45,e.water*0.45)+"%";
+  $("ecoSun").textContent=e.heat>60?"☀️":e.heat>30?"⛅":"🌥️";
+  // creatures
+  [...document.querySelectorAll('.eco .larva,.eco .skeeter')].forEach(x=>x.remove());
+  const nLarva=Math.round(Math.min(10,e.water/12*(0.5+e.heat/100)));
+  const nSke=Math.round(state.eco.skeeter||0);
+  for(let k=0;k<nLarva;k++){const l=document.createElement('div');l.className='larva';l.textContent='〰️';
+    l.style.left=(10+Math.random()*80)+'%';l.style.bottom=(2+Math.random()*Math.min(40,e.water*0.4))+'%';l.style.fontSize='12px';l.style.opacity=.8;$("eco").appendChild(l);}
+  for(let k=0;k<nSke;k++){const m=document.createElement('div');m.className='skeeter';m.textContent='🦟';
+    m.style.left=(8+Math.random()*84)+'%';m.style.bottom=(45+Math.random()*40)+'%';m.style.animationDelay=(Math.random()*2).toFixed(1)+'s';$("eco").appendChild(m);}
+  const risk=Math.min(100,Math.round(e.water*0.4+e.heat*0.25+(state.eco.skeeter||0)*6));
+  state.eco.risk=risk;$("ecoMeter").style.width=risk+"%";
+  const cap=risk>70?tr("⚠️ Outbreak conditions — dense breeding, high dengue risk.","⚠️ প্রকোপের পরিবেশ — ঘন প্রজনন, উচ্চ ঝুঁকি।")
+    :risk>40?tr("Mosquitoes are multiplying. Risk is climbing — time to clean up.","মশা বাড়ছে। ঝুঁকি উঠছে — পরিষ্কার করার সময়।")
+    :risk>15?tr("Water is collecting and larvae are forming.","পানি জমছে, লার্ভা তৈরি হচ্ছে।")
+    :tr("A calm, dry environment. Press buttons to see how risk builds.","শান্ত, শুষ্ক পরিবেশ। বোতাম চেপে দেখুন ঝুঁকি কীভাবে বাড়ে।");
+  $("ecoCaption").textContent=cap;
+}
+function ecoRain(){state.eco.water=Math.min(100,state.eco.water+28);
+  $("ecoRain").innerHTML=Array.from({length:22}).map(()=>`<i style="left:${(Math.random()*100).toFixed(0)}%;animation-delay:${(Math.random()*.8).toFixed(2)}s"></i>`).join("");
+  sfx.rain(true);setTimeout(()=>{$("ecoRain").innerHTML="";sfx.rain(false);},2600);ecoRender();}
+$("ecoRainBtn").onclick=ecoRain;
+$("ecoHeatBtn").onclick=()=>{state.eco.heat=Math.min(100,state.eco.heat+30);sfx.click();ecoRender();};
+$("ecoTimeBtn").onclick=()=>{ // larvae mature into mosquitoes if there's water+warmth
+  const grow=Math.round(state.eco.water/20*(0.4+state.eco.heat/120));
+  state.eco.skeeter=Math.min(14,(state.eco.skeeter||0)+grow);
+  state.eco.water=Math.max(0,state.eco.water-10);sfx.buzz();ecoRender();};
+$("ecoSprayBtn").onclick=()=>{state.eco.skeeter=Math.max(0,(state.eco.skeeter||0)-6);state.eco.water=Math.max(0,state.eco.water-25);sfx.click();ecoRender();};
+$("ecoResetBtn").onclick=()=>{state.eco={rain:0,heat:0,water:0,skeeter:0,risk:0};$("ecoRain").innerHTML="";sfx.rain(false);ecoRender();};
+
+/* ---------------- patient case handling ---------------- */
+$("cReport").onchange=$("cNidScan").onchange=()=>{
+  const files=[...($("cReport").files||[]),...($("cNidScan").files||[])];
+  $("cDocs").innerHTML=files.map(f=>`<span class="docchip">${f.type.includes('pdf')?'📄':'🖼️'} ${f.name.slice(0,22)}</span>`).join("");
+};
+function renderCaseStat(){
+  const here=(state.cases||[]).filter(c=>c.parent===state.area.p);
+  const hosp=here.filter(c=>c.status==="Hospitalised"||c.status==="ICU").length;
+  $("caseStat").innerHTML=here.length?`
+    <div class="cs"><b>${N(here.length)}</b>${tr("cases logged","রোগী লিপিবদ্ধ")}</div>
+    <div class="cs"><b>${N(hosp)}</b>${tr("hospitalised","হাসপাতালে")}</div>
+    <div class="cs"><b>${N(state.area.p)}</b>${tr("area","এলাকা")}</div>`:"";
+}
+$("cSubmit").onclick=()=>{
+  if(!$("cConsent").checked){$("cMsg").textContent=tr("Please confirm patient consent before submitting.","জমা দেওয়ার আগে রোগীর সম্মতি নিশ্চিত করুন।");return;}
+  const nid=$("cNid").value.trim(), masked=nid?("•••• "+nid.slice(-4)):"";
+  const ll=[state.area.lat+(Math.random()-.5)*.03,state.area.lon+(Math.random()-.5)*.03];
+  // NOTE: full NID and files are NOT persisted — only anonymised tracking metadata
+  state.cases.push({parent:state.area.p,area:state.area.id,method:$("cMethod").value,status:$("cStatus").value,
+    lat:ll[0],lng:ll[1],ts:Date.now(),nidMasked:masked});
+  store.set("dp2_cases",state.cases);
+  ["cName","cNid","cPhone","cAge","cAddr"].forEach(id=>$(id).value="");$("cConsent").checked=false;$("cDocs").innerHTML="";
+  $("cMsg").textContent=tr("✓ Case logged for surveillance. Full NID & uploaded files were used only on this device and not stored (see privacy note).","✓ রোগী নজরদারিতে লিপিবদ্ধ। পূর্ণ NID ও ফাইল শুধু এই ডিভাইসে ব্যবহৃত, সংরক্ষণ হয়নি।");
+  sfx.chime();renderCaseStat();buildHeatmap();
+};
+
+/* ---------------- model anchor ---------------- */
+function recompute(){ if(state.wcache[state.area.p]){ state.summary=summaryFor(state.wcache[state.area.p],state.area); renderAll(); buildHeatmap(); checkAreas(false);} }
+$("anchorApply").onclick=()=>{const v=parseFloat($("anchorIn").value);state.anchor=isNaN(v)?null:v;recompute();};
+$("anchorClear").onclick=()=>{$("anchorIn").value="";state.anchor=null;recompute();};
+
+/* ---------------- boot additions ---------------- */
+buildAreaSelect();renderChips();chatPush(tr("Hi! Ask me about dengue risk in any area.","হ্যালো! যেকোনো এলাকার ডেঙ্গু ঝুঁকি জিজ্ঞাসা করুন।"),"a");
+if("Notification"in window)setPerm(Notification.permission);
+renderNotices(); ecoRender(); renderCaseStat();
+baUpdate(0);
+load();
+setTimeout(()=>{initRepMap();},900);
+setTimeout(()=>checkAreas(false),2000);
+setInterval(()=>{state.awx={};checkAreas(false);},5*60*1000);
+</script>
+</body>
+</html>
